@@ -6,6 +6,26 @@ import uuid
 from parser.cisco_parser import parse_cisco_config
 from audit.compliance_engine import audit_configuration, summarize_findings, load_rules
 from scoring.risk_engine import assess_findings
+import os
+from werkzeug.utils import secure_filename
+import os
+import json
+import uuid
+
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    flash,
+    send_file,
+    abort
+)
+
+from werkzeug.utils import secure_filename
+
+IS_VERCEL = os.environ.get("VERCEL") == "1"
 
 BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_DIR = BASE_DIR / "uploads"
