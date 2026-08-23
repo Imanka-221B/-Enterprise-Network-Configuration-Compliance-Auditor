@@ -1,11 +1,12 @@
 !
-
+hostname BRANCH-SW01
 !
 ip domain name example.local
-
+ip ssh version 2
 ip ssh time-out 60
 ip ssh authentication-retries 3
 !
+aaa new-model
 username netadmin privilege 15 secret 5 HASHED_VALUE
 enable secret 5 ENABLE_HASH
 login block-for 120 attempts 3 within 60
@@ -90,7 +91,7 @@ interface GigabitEthernet1/0/24
 !
 line vty 0 15
  login authentication default
-
+ transport input ssh
  access-class MGMT-ACCESS in
  exec-timeout 10 0
 !
