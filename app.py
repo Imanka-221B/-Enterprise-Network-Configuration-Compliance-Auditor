@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, redirect, url_for, flash, sen
 from pathlib import Path
 from datetime import datetime
 import json
+import os
+import tempfile
 import uuid
 from parser.cisco_parser import parse_cisco_config
 from audit.compliance_engine import audit_configuration, summarize_findings, load_rules
@@ -9,17 +11,25 @@ from scoring.risk_engine import assess_findings
 
 
 BASE_DIR = Path(__file__).resolve().parent
-UPLOAD_DIR = BASE_DIR / "uploads"
-AUDIT_RECORD_DIR = BASE_DIR / "audit_records"
-REPORT_DIR = BASE_DIR / "reports" / "generated"
+# Vercel Functions deploy application files on an immutable filesystem.  The
+# operating-system temporary directory is the only safe place for runtime
+# uploads, audit records and generated reports.  Local development retains the
+# original project folders so existing audit history is still available.
+RUNTIME_DIR = (
+    Path(tempfile.gettempdir()) / "encca"
+    if os.environ.get("VERCEL")
+    else BASE_DIR
+)
+UPLOAD_DIR = RUNTIME_DIR / "uploads"
+AUDIT_RECORD_DIR = RUNTIME_DIR / "audit_records"
+REPORT_DIR = RUNTIME_DIR / "reports" / "generated"
 ALLOWED_EXTENSIONS = {".txt", ".cfg", ".conf"}
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "encca-development-key"
+app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", "encca-development-key")
 app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024
-UPLOAD_DIR.mkdir(exist_ok=True)
-AUDIT_RECORD_DIR.mkdir(exist_ok=True)
-REPORT_DIR.mkdir(exist_ok=True)
+for directory in (UPLOAD_DIR, AUDIT_RECORD_DIR, REPORT_DIR):
+    directory.mkdir(parents=True, exist_ok=True)
 
 
 def allowed_file(filename):
@@ -77,8 +87,16 @@ def upload():
             return redirect(url_for("upload"))
 
         safe_name = Path(file.filename).name
-        destination = UPLOAD_DIR / safe_name
-        file.save(destination)
+        audit_id = uuid.uuid4().hex[:12]
+        # Keep each upload separate. This prevents two users uploading a file
+        # with the same name from overwriting each other's configuration.
+        destination = UPLOAD_DIR / f"{audit_id}_{safe_name}"
+        try:
+            file.save(destination)
+        except OSError:
+            app.logger.exception("Could not save uploaded configuration")
+            flash("The configuration could not be processed. Please try again.")
+            return redirect(url_for("upload"))
 
         parsed = parse_cisco_config(destination)
         findings = audit_configuration(parsed)
@@ -139,7 +157,6 @@ def upload():
             "interfaces": interface_inventory,
         }
 
-        audit_id = uuid.uuid4().hex[:12]
         audit_record = {
             "audit_id": audit_id,
             "filename": safe_name,
