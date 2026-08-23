@@ -1,0 +1,69 @@
+!
+! ENCCA Viva Demo - Insecure Cisco IOS Configuration
+! Demonstrates compliance failures and risk prioritization
+!
+hostname BRANCH-SW-INSECURE
+
+vlan 10
+ name INFRA
+vlan 20
+ name MANAGER
+vlan 30
+ name USER
+vlan 40
+ name VOICE
+vlan 99
+ name MANAGEMENT
+vlan 999
+ name UNUSED-NATIVE
+
+interface GigabitEthernet1/0/1
+ description USER-PORT-01
+ switchport mode access
+ switchport access vlan 30
+ no switchport port-security
+ no spanning-tree portfast
+ no spanning-tree bpduguard enable
+ no shutdown
+
+interface GigabitEthernet1/0/2
+ description USER-VOICE-PORT
+ switchport mode access
+ switchport access vlan 30
+ switchport voice vlan 40
+ no switchport port-security
+ no spanning-tree portfast
+ no spanning-tree bpduguard enable
+ no shutdown
+
+interface GigabitEthernet1/1/1
+ description UPLINK
+ switchport mode trunk
+ switchport trunk native vlan 1
+ no ip dhcp snooping trust
+ no ip arp inspection trust
+ no shutdown
+
+interface GigabitEthernet1/0/23
+ description UNUSED
+ switchport mode access
+ switchport access vlan 999
+ no shutdown
+
+no aaa new-model
+ip http server
+
+snmp-server community public RO
+snmp-server version 1
+
+line vty 0 4
+ transport input telnet
+line vty 0 15
+ip ssh version 2
+ exec-timeout 0 0
+ no access-class
+
+no logging host 10.10.10.10
+no ntp server 10.10.10.20
+!
+end

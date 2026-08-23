@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ENCCA | Audit Results · {{ data.hostname or filename }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="app-body">
+<div class="app-shell">
+    <aside class="sidebar">
+        <div class="brand" id="brandToggle" role="button" tabindex="0" aria-label="Toggle navigation sidebar" title="Expand navigation">
+            <div class="brand-mark">EN</div>
+            <div class="brand-copy">
+                <div class="brand-name">ENCCA</div>
+                <div class="brand-subtitle">Network Security</div>
+            </div>
+            <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="Collapse navigation" title="Collapse navigation">‹</button>
+        </div>
+
+
+        <div class="nav-label">OVERVIEW</div>
+        <nav class="side-nav">
+            <a class="nav-item active" data-section="overview" href="#overview"><span class="nav-icon">▣</span><span class="nav-text">Dashboard</span></a>
+        </nav>
+
+        <div class="nav-label">SECURITY</div>
+        <nav class="side-nav">
+            <a class="nav-item" data-section="compliance" href="#compliance"><span class="nav-icon">◉</span><span class="nav-text">Compliance</span></a>
+            <a class="nav-item" data-section="risk" href="#risk"><span class="nav-icon">◈</span><span class="nav-text">Risk Assessment</span></a>
+            <a class="nav-item" data-section="statistics" href="#statistics"><span class="nav-icon">▥</span><span class="nav-text">Security Statistics</span></a>
+            <a class="nav-item" data-section="findings" href="#findings"><span class="nav-icon">≡</span><span class="nav-text">Findings</span> <span class="nav-count">{{ summary.failed }}</span></a>
+        </nav>
+
+        <div class="nav-label">CONFIGURATION</div>
+        <nav class="side-nav">
+            <a class="nav-item" data-section="configuration" href="#configuration"><span class="nav-icon">▤</span><span class="nav-text">Device Data</span></a>
+            <a class="nav-item" href="{{ url_for('upload') }}"><span class="nav-icon">＋</span><span class="nav-text">New Audit</span></a>
+        </nav>
+
+        <div class="nav-label">REPORTING</div>
+        <nav class="side-nav">
+            <a class="nav-item report-nav-item" data-section="report" href="{{ url_for('audit_report', audit_id=audit_id) }}">
+                <span class="nav-icon">▤</span><span class="nav-text">Audit Report</span>
+            </a>
+            <a class="nav-item" href="{{ url_for('audit_history') }}">
+                <span class="nav-icon">◷</span><span class="nav-text">Audit History</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-spacer"></div>
+        <div class="system-status"><span class="status-dot"></span><span>Audit completed</span></div>
+        <div class="sidebar-footer">ENCCA v5 · UI v2.0 · Compliance v2.1 · Risk v1.0</div>
+    </aside>
+
+    <main class="main-area">
+        <header class="topbar">
+            <div class="topbar-left">
+                <span class="mobile-brand">ENCCA</span>
+                <span class="breadcrumb">Audit Results <b>/</b> {{ data.hostname or filename }}</span>
+            </div>
+            <div class="topbar-right">
+                <span class="environment-chip"><span class="status-dot"></span> Local Audit</span>
+                <span class="engine-status"><span class="status-dot"></span> System Operational</span>
+                <span class="user-chip"><span class="avatar">A</span> Administrator</span>
+            </div>
+        </header>
+
+        <section class="page-content" id="overview">
+            <div class="page-heading result-heading">
+                <div>
+                    <div class="eyebrow">AUDIT RESULTS</div>
+                    <h1>{{ data.hostname or "Configuration Audit" }}</h1>
+                    <p>Enterprise Network Configuration Compliance Auditor · completed {{ audit_time }}</p>
+                </div>
+                <div class="heading-actions">
+                    <a class="primary-button report-shortcut" href="{{ url_for('audit_report', audit_id=audit_id) }}">▤ Audit Report</a>
+                    <span class="completion-pill"><span>✓</span> Audit Completed</span>
+                    <a class="secondary-button" href="{{ url_for('upload') }}">＋ New Audit</a>
+                </div>
+            </div>
+
+            <section class="device-strip">
+                <div class="device-main">
+                    <div class="device-icon">SW</div>
+                    <div>
+                        <span class="device-label">AUDITED CONFIGURATION</span>
+                        <strong>{{ filename }}</strong>
+                        <span>{{ data.hostname or "Hostname not detected" }}</span>
+                    </div>
+                </div>
+                <div class="device-meta">
+                    <div><span>Compliance</span><strong>v2.1</strong></div>
+                    <div><span>Risk Engine</span><strong>v1.0</strong></div>
+                    <div><span>Controls</span><strong>{{ summary.evaluated }}</strong></div>
+                </div>
+            </section>
+
+            <div class="section-title-row" id="compliance">
+                <div>
+                    <div class="section-kicker">SECURITY POSTURE</div>
+                    <h2>Compliance Overview</h2>
+                </div>
+                <span class="section-caption">Deterministic control evaluation</span>
+            </div>
+
+            <div class="metric-grid">
+                <div class="metric-card primary-metric">
+                    <div class="metric-top"><span>COMPLIANCE SCORE</span><span class="metric-icon">✓</span></div>
+                    <strong>{{ summary.compliance_score }}%</strong>
+                    <div class="metric-foot"><span class="mini-bar"><i style="width: {{ summary.compliance_score }}%"></i></span><span>{{ summary.passed }} / {{ summary.total }} passed</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-top"><span>APPLICABLE CHECKS</span><span class="metric-icon">≡</span></div>
+                    <strong>{{ summary.total }}</strong>
+                    <div class="metric-foot"><span>Evaluated compliance controls</span></div>
+                </div>
+                <div class="metric-card success-metric">
+                    <div class="metric-top"><span>PASSED</span><span class="metric-icon">✓</span></div>
+                    <strong>{{ summary.passed }}</strong>
+                    <div class="metric-foot"><span>Controls meeting the policy</span></div>
+                </div>
+                <div class="metric-card danger-metric">
+                    <div class="metric-top"><span>FAILED</span><span class="metric-icon">!</span></div>
+                    <strong>{{ summary.failed }}</strong>
+                    <div class="metric-foot"><span>{{ summary.severity_counts.High }} high · {{ summary.severity_counts.Medium }} medium</span></div>
+                </div>
+                <div class="metric-card neutral-metric">
+                    <div class="metric-top"><span>NOT APPLICABLE</span><span class="metric-icon">—</span></div>
+                    <strong>{{ summary.not_applicable }}</strong>
+                    <div class="metric-foot"><span>Excluded from compliance score</span></div>
+                </div>
+            </div>
+
+            <div class="model-note">
+                <span class="note-icon">i</span>
+                <div><strong>Compliance scoring model</strong><span>Passed Checks ÷ Applicable Checks × 100. Compliance decisions remain deterministic and authoritative.</span></div>
+            </div>
+
+            <div class="section-title-row risk-section-title" id="risk">
+                <div>
+                    <div class="section-kicker">RISK ANALYSIS</div>
+                    <h2>Risk Assessment</h2>
+                </div>
+                <span class="engine-pill">Risk Assessment Engine <b>v1.0</b></span>
+            </div>
+
+            <div class="risk-dashboard">
+                <div class="panel risk-score-panel">
+                    <div class="panel-header compact">
+                        <div>
+                            <span class="section-kicker">SECURITY SCORE</span>
+                            <h3>Overall Security Posture</h3>
+                        </div>
+                        <span class="risk-badge risk-{{ risk.summary.risk_level|lower }}">{{ risk.summary.risk_level }}</span>
+                    </div>
+                    <div class="gauge-wrap">
+                        <div class="gauge risk-gauge risk-{{ risk.summary.risk_level|lower }}" style="--score: {{ risk.summary.security_score }};">
+                            <div class="gauge-inner">
+                                <strong>{{ risk.summary.security_score }}</strong>
+                                <span>/ 100</span>
+                            </div>
+                        </div>
+                        <div class="gauge-copy">
+                            <div class="big-risk">{{ risk.summary.risk_percentage }}% <span>risk</span></div>
+                            <p>{{ risk.summary.failed_count }} weighted compliance findings contribute to the current risk posture.</p>
+                        </div>
+                    </div>
+                    <div class="risk-model-mini">
+                        <span>Risk formula</span>
+                        <strong>Failed Severity Weight ÷ Applicable Severity Weight × 100</strong>
+                    </div>
+                </div>
+
+                <div class="panel severity-panel">
+                    <div class="panel-header compact">
+                        <div>
+                            <span class="section-kicker">FINDING DISTRIBUTION</span>
+                            <h3>Risk by Severity</h3>
+                        </div>
+                        <span class="muted">{{ risk.summary.failed_count }} findings</span>
+                    </div>
+                    <div class="severity-list">
+                        {% for level in ['Critical','High','Medium','Low'] %}
+                        {% set count = risk.summary.severity_counts[level] %}
+                        <div class="severity-row">
+                            <div class="severity-name"><span class="severity-dot {{ level|lower }}"></span>{{ level }}<strong>{{ count }}</strong></div>
+                            <div class="severity-track"><i class="{{ level|lower }}" style="width: {{ ((count / risk.summary.failed_count * 100) if risk.summary.failed_count else 0) }}%"></i></div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="severity-legend"><span><b>Critical</b> 4</span><span><b>High</b> 3</span><span><b>Medium</b> 2</span><span><b>Low</b> 1</span></div>
+                </div>
+
+                <div class="panel category-panel">
+                    <div class="panel-header compact">
+                        <div>
+                            <span class="section-kicker">RISK BREAKDOWN</span>
+                            <h3>Risk by Category</h3>
+                        </div>
+                    </div>
+                    {% if category_risk %}
+                    <div class="category-list">
+                        {% for category, item in category_risk.items() %}
+                        <div class="category-row">
+                            <div class="category-label"><span>{{ category }}</span><span class="risk-badge small risk-{{ item.severity|lower }}">{{ item.severity }}</span></div>
+                            <div class="category-track"><i style="width: {{ item.contribution }}%"></i></div>
+                            <div class="category-meta"><span>{{ item.count }} finding{{ '' if item.count == 1 else 's' }}</span><strong>{{ item.contribution }}%</strong></div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">No weighted risk findings were identified.</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="risk-posture risk-{{ risk.summary.risk_level|lower }}">
+                <div class="risk-posture-mark">{{ '!' if risk.summary.risk_level in ['Critical','High'] else 'i' }}</div>
+                <div>
+                    <strong>{{ risk.summary.risk_level }} security posture</strong>
+                    <span>{{ risk.summary.risk_percentage }}% calculated risk across {{ risk.summary.failed_count }} failed weighted findings. Review the highest-impact controls first.</span>
+                </div>
+                <span class="risk-posture-score">{{ risk.summary.security_score }}/100 security score</span>
+            </div>
+
+            <div class="model-note risk-note">
+                <span class="note-icon">i</span>
+                <div><strong>Risk model</strong><span>Critical=4, High=3, Medium=2, Low=1. The Risk Engine interprets compliance findings; it does not change PASS/FAIL decisions.</span></div>
+            </div>
+
+            <div class="section-title-row statistics-title" id="statistics">
+                <div>
+                    <div class="section-kicker">SECURITY ANALYTICS</div>
+                    <h2>Security Statistics &amp; Charts</h2>
+                    <p class="section-description">Visual summary of compliance health, risk exposure and audited interface posture.</p>
+                </div>
+                <span class="section-caption">Derived from this audit</span>
+            </div>
+
+            <section class="statistics-section">
+                <div class="statistics-metric-grid">
+                    <div class="stat-card"><span class="stat-label">COMPLIANCE SCORE</span><strong>{{ statistics.compliance.score }}%</strong><span class="stat-meta">{{ statistics.compliance.passed }} passed of {{ statistics.compliance.applicable }} applicable</span></div>
+                    <div class="stat-card risk-stat"><span class="stat-label">RISK EXPOSURE</span><strong>{{ statistics.risk.percentage }}%</strong><span class="stat-meta">{{ statistics.risk.level }} · {{ risk.summary.failed_count }} weighted findings</span></div>
+                    <div class="stat-card"><span class="stat-label">FAILED CONTROLS</span><strong>{{ statistics.compliance.failed }}</strong><span class="stat-meta">{{ statistics.risk.high }} high · {{ statistics.risk.medium }} medium · {{ statistics.risk.low }} low</span></div>
+                    <div class="stat-card"><span class="stat-label">INTERFACES</span><strong>{{ statistics.interfaces.total }}</strong><span class="stat-meta">{{ statistics.interfaces.access }} access · {{ statistics.interfaces.trunk }} trunk · {{ statistics.interfaces.unused }} unused</span></div>
+                </div>
+
+                <div class="statistics-chart-grid">
+                    <div class="panel chart-panel">
+                        <div class="panel-header compact"><div><span class="section-kicker">CONTROL HEALTH</span><h3>Compliance Outcome</h3></div><span class="muted">{{ statistics.compliance.applicable }} applicable</span></div>
+                        <div class="chart-list">
+                            {% set outcome_total = statistics.compliance.passed + statistics.compliance.failed + statistics.compliance.not_applicable %}
+                            {% for label, value, cls in [('Passed', statistics.compliance.passed, 'passed'), ('Failed', statistics.compliance.failed, 'failed'), ('Not Applicable', statistics.compliance.not_applicable, 'na')] %}
+                            <div class="chart-row"><div class="chart-row-head"><span><i class="chart-dot {{ cls }}"></i>{{ label }}</span><strong>{{ value }}</strong></div><div class="chart-track"><i class="chart-fill {{ cls }}" style="width: {{ ((value / outcome_total * 100) if outcome_total else 0) }}%"></i></div></div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="panel chart-panel">
+                        <div class="panel-header compact"><div><span class="section-kicker">RISK DISTRIBUTION</span><h3>Findings by Severity</h3></div><span class="muted">{{ risk.summary.failed_count }} findings</span></div>
+                        <div class="chart-list">
+                            {% set risk_total = statistics.risk.critical + statistics.risk.high + statistics.risk.medium + statistics.risk.low %}
+                            {% for label, value, cls in [('Critical', statistics.risk.critical, 'critical'), ('High', statistics.risk.high, 'high'), ('Medium', statistics.risk.medium, 'medium'), ('Low', statistics.risk.low, 'low')] %}
+                            <div class="chart-row"><div class="chart-row-head"><span><i class="chart-dot {{ cls }}"></i>{{ label }}</span><strong>{{ value }}</strong></div><div class="chart-track"><i class="chart-fill {{ cls }}" style="width: {{ ((value / risk_total * 100) if risk_total else 0) }}%"></i></div></div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="panel chart-panel">
+                        <div class="panel-header compact"><div><span class="section-kicker">RISK BREAKDOWN</span><h3>Risk Contribution by Category</h3></div><span class="muted">{{ category_risk|length }} categories</span></div>
+                        {% if category_risk %}<div class="chart-list category-chart-list">
+                            {% for category, item in category_risk.items() %}<div class="chart-row"><div class="chart-row-head"><span>{{ category }}</span><strong>{{ item.contribution }}%</strong></div><div class="chart-track"><i class="chart-fill category" style="width: {{ item.contribution }}%"></i></div></div>{% endfor %}
+                        </div>{% else %}<div class="empty-state">No weighted risk categories available.</div>{% endif %}
+                    </div>
+
+                    <div class="panel chart-panel">
+                        <div class="panel-header compact"><div><span class="section-kicker">INTERFACE POSTURE</span><h3>Interface Inventory</h3></div><span class="muted">{{ statistics.interfaces.total }} detected</span></div>
+                        {% set iface_total = statistics.interfaces.access + statistics.interfaces.trunk + statistics.interfaces.unused + statistics.interfaces.other %}
+                        <div class="interface-bars">
+                            {% for label, value, cls in [('Access ports', statistics.interfaces.access, 'access'), ('Trunk / uplink', statistics.interfaces.trunk, 'trunk'), ('Unused ports', statistics.interfaces.unused, 'unused'), ('Other', statistics.interfaces.other, 'other')] %}<div class="interface-bar-row"><span>{{ label }}</span><div class="interface-track"><i class="interface-fill {{ cls }}" style="width: {{ ((value / iface_total * 100) if iface_total else 0) }}%"></i></div><strong>{{ value }}</strong></div>{% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="statistics-note"><span class="note-icon">i</span><div><strong>Statistics model</strong><span>Charts are presentation-only analytics generated from Parser v2, Compliance Engine v2.1 and Risk Engine v1.0 outputs. They do not modify authoritative compliance or risk decisions.</span></div></div>
+            </section>
+
+            <section class="panel findings-panel" id="findings">
+                <div class="panel-header findings-header">
+                    <div>
+                        <div class="section-kicker">PRIORITIZED FINDINGS</div>
+                        <h2>Risk Findings</h2>
+                        <p>Highest-impact failed controls are shown first.</p>
+                    </div>
+                    <div class="finding-summary">
+                        <span class="risk-count high"><b>{{ risk.summary.severity_counts.High }}</b> High</span>
+                        <span class="risk-count medium"><b>{{ risk.summary.severity_counts.Medium }}</b> Medium</span>
+                        <span class="risk-count low"><b>{{ risk.summary.severity_counts.Low }}</b> Low</span>
+                    </div>
+                </div>
+
+                {% if risk.prioritized_findings %}
+                <div class="table-toolbar">
+                    <div class="search-box"><span>⌕</span><input id="riskSearch" type="search" placeholder="Search rule, category, check or target..."></div>
+                    <div class="filter-group" id="riskFilters">
+                        <button class="filter-button active" data-risk="all">All</button>
+                        <button class="filter-button" data-risk="Critical">Critical</button>
+                        <button class="filter-button" data-risk="High">High</button>
+                        <button class="filter-button" data-risk="Medium">Medium</button>
+                        <button class="filter-button" data-risk="Low">Low</button>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table class="data-table risk-table" id="riskTable">
+                        <thead><tr><th>Rule</th><th>Risk</th><th>Finding</th><th>Target</th><th>Evidence</th><th>Contribution</th><th>Action</th></tr></thead>
+                        <tbody>
+                        {% for f in risk.prioritized_findings %}
+                        <tr data-risk-level="{{ f.severity }}" data-search="{{ (f.rule_id ~ ' ' ~ f.category ~ ' ' ~ f.check ~ ' ' ~ f.target ~ ' ' ~ f.evidence)|lower }}">
+                            <td><strong class="rule-id">{{ f.rule_id }}</strong><span class="cell-sub">{{ f.category }}</span></td>
+                            <td><span class="risk-badge risk-{{ f.severity|lower }}">{{ f.severity }}</span></td>
+                            <td><strong>{{ f.check }}</strong></td>
+                            <td><span class="target-chip">{{ f.target }}</span></td>
+                            <td class="evidence">{{ f.evidence }}</td>
+                            <td><strong>{{ f.risk_contribution }}%</strong></td>
+                            <td><details class="inline-detail"><summary>View</summary><div class="detail-popover"><strong>Recommendation</strong><p>{{ f.recommendation }}</p>{% if f.remediation %}<code>{{ f.remediation }}</code>{% endif %}{% if f.reference %}<small>{{ f.reference }}</small>{% endif %}</div></details></td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state success-empty"><span>✓</span><strong>No failed risk findings</strong><p>The audited configuration has no weighted compliance failures.</p></div>
+                {% endif %}
+            </section>
+
+            <section class="panel findings-panel" id="report">
+                <div class="panel-header findings-header">
+                    <div>
+                        <div class="section-kicker">CONTROL RESULTS</div>
+                        <h2>Compliance Findings</h2>
+                        <p>Authoritative results returned by Compliance Engine v2.1.</p>
+                    </div>
+                    <div class="finding-summary"><span class="status-count pass"><b>{{ summary.passed }}</b> Pass</span><span class="status-count fail"><b>{{ summary.failed }}</b> Fail</span><span class="status-count na"><b>{{ summary.not_applicable }}</b> N/A</span></div>
+                </div>
+
+                <div class="table-toolbar">
+                    <div class="search-box"><span>⌕</span><input id="complianceSearch" type="search" placeholder="Search rule, check, interface or evidence..."></div>
+                    <div class="filter-group" id="complianceFilters">
+                        <button class="filter-button active" data-status="all">All</button>
+                        <button class="filter-button" data-status="PASS">Pass</button>
+                        <button class="filter-button" data-status="FAIL">Fail</button>
+                        <button class="filter-button" data-status="NOT_APPLICABLE">N/A</button>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table class="data-table compliance-table" id="complianceTable">
+                        <thead><tr><th>Rule</th><th>Control</th><th>Target</th><th>Status</th><th>Severity</th><th>Evidence</th><th>Details</th></tr></thead>
+                        <tbody>
+                        {% for f in findings %}
+                        <tr data-status="{{ f.status }}" data-search="{{ (f.rule_id ~ ' ' ~ f.category ~ ' ' ~ f.title ~ ' ' ~ f.target ~ ' ' ~ f.evidence ~ ' ' ~ f.expected)|lower }}">
+                            <td><strong class="rule-id">{{ f.rule_id }}</strong><span class="cell-sub">{{ f.category }}</span></td>
+                            <td><strong>{{ f.title }}</strong></td>
+                            <td><span class="target-chip">{{ f.target }}</span></td>
+                            <td><span class="status-badge {{ 'pass' if f.status == 'PASS' else 'fail' if f.status == 'FAIL' else 'not-applicable' }}">{{ 'N/A' if f.status == 'NOT_APPLICABLE' else f.status }}</span></td>
+                            <td>{% if f.severity != '-' %}<span class="severity-text {{ f.severity|lower }}">{{ f.severity }}</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+                            <td class="evidence">{{ f.evidence }}</td>
+                            <td>
+                                {% if f.status == 'PASS' %}
+                                    <span class="pass-action">No action required</span>
+                                {% else %}
+                                    <details class="inline-detail"><summary>View details</summary><div class="detail-popover">
+                                        <div><strong>Expected</strong><p>{{ f.expected }}</p></div>
+                                        <div><strong>Recommendation</strong><p>{{ f.recommendation }}</p></div>
+                                        {% if f.remediation %}<code>{{ f.remediation }}</code>{% endif %}
+                                        {% if f.reference %}<small>{{ f.reference }}</small>{% endif %}
+                                    </div></details>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="section-title-row" id="configuration">
+                <div><div class="section-kicker">PARSED CONFIGURATION</div><h2>Device Data</h2></div>
+                <span class="section-caption">Structured information extracted by Parser v2</span>
+            </section>
+
+            <section class="data-section-grid">
+                <div class="panel">
+                    <div class="panel-header compact"><div><h3>Parsed VLANs</h3><span class="muted">{{ data.vlans|length }} VLANs detected</span></div></div>
+                    <div class="table-wrapper compact-table"><table class="data-table"><thead><tr><th>VLAN ID</th><th>Name</th></tr></thead><tbody>
+                    {% for vlan in data.vlans %}<tr><td><strong>{{ vlan.id }}</strong></td><td>{{ vlan.name or "-" }}</td></tr>{% endfor %}
+                    </tbody></table></div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header compact"><div><h3>VTY Lines</h3><span class="muted">{{ data.vty_lines|length }} VTY block{{ '' if data.vty_lines|length == 1 else 's' }}</span></div></div>
+                    <div class="table-wrapper compact-table"><table class="data-table"><thead><tr><th>Transport</th><th>SSH Only</th><th>Telnet</th><th>Access Class</th><th>Timeout</th></tr></thead><tbody>
+                    {% for vty in data.vty_lines %}<tr><td>{{ vty.transport_input|join(", ") or "-" }}</td><td>{{ vty.ssh_only }}</td><td>{{ vty.telnet_allowed }}</td><td>{{ vty.access_class or "-" }}</td><td>{{ vty.exec_timeout or "-" }}</td></tr>{% endfor %}
+                    </tbody></table></div>
+                </div>
+            </section>
+
+            <section class="panel interface-panel">
+                <div class="panel-header compact"><div><div class="section-kicker">INTERFACE INVENTORY</div><h3>Parsed Interfaces</h3></div><span class="muted">{{ data.interfaces|length }} interfaces detected</span></div>
+                <div class="table-wrapper"><table class="data-table interface-table"><thead><tr><th>Interface</th><th>Role</th><th>Mode</th><th>Access VLAN</th><th>Voice VLAN</th><th>Native VLAN</th><th>Port Security</th><th>PortFast</th><th>BPDU Guard</th><th>Shutdown</th></tr></thead><tbody>
+                {% for i in data.interfaces %}
+                <tr><td><strong>{{ i.name }}</strong></td><td>{{ i.role|default('unknown') }}</td><td>{{ i.mode }}</td><td>{{ i.access_vlan or "-" }}</td><td>{{ i.voice_vlan or "-" }}</td><td>{{ i.native_vlan or "-" }}</td><td>{{ i.port_security }}</td><td>{{ i.portfast }}</td><td>{{ i.bpdu_guard }}</td><td>{{ i.shutdown }}</td></tr>
+                {% endfor %}
+                </tbody></table></div>
+            </section>
+
+            <div class="footer-actions">
+                <a class="secondary-button" href="{{ url_for('upload') }}">← Audit another configuration</a>
+                <span>ENCCA · Enterprise Network Configuration Compliance Auditor</span>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script>
+function setupTableFilter(searchId, tableId, filterId, attribute) {
+    const search = document.getElementById(searchId);
+    const table = document.getElementById(tableId);
+    const filters = document.getElementById(filterId);
+    if (!search || !table || !filters) return;
+    let active = 'all';
+
+    function apply() {
+        const term = search.value.toLowerCase().trim();
+        table.querySelectorAll('tbody tr').forEach(row => {
+            const matchesTerm = !term || (row.dataset.search || '').includes(term);
+            const matchesFilter = active === 'all' || row.getAttribute(attribute) === active;
+            row.style.display = matchesTerm && matchesFilter ? '' : 'none';
+        });
+    }
+
+    search.addEventListener('input', apply);
+    filters.querySelectorAll('.filter-button').forEach(button => {
+        button.addEventListener('click', () => {
+            filters.querySelectorAll('.filter-button').forEach(b => b.classList.remove('active'));
+            button.classList.add('active');
+            active = button.dataset[attribute === 'data-risk-level' ? 'risk' : 'status'];
+            apply();
+        });
+    });
+}
+setupTableFilter('riskSearch','riskTable','riskFilters','data-risk-level');
+setupTableFilter('complianceSearch','complianceTable','complianceFilters','data-status');
+
+const sectionLinks = [...document.querySelectorAll('.side-nav a[data-section]')];
+sectionLinks.forEach(link => {
+    link.addEventListener('click', e => {
+        const target = document.getElementById(link.dataset.section);
+        if (target) {
+            e.preventDefault();
+            target.scrollIntoView({behavior:'smooth', block:'start'});
+            history.replaceState(null, '', '#' + link.dataset.section);
+        }
+    });
+});
+
+const observedSections = sectionLinks
+    .map(link => document.getElementById(link.dataset.section))
+    .filter(Boolean);
+
+const sectionObserver = new IntersectionObserver(entries => {
+    const visible = entries.filter(entry => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+    if (!visible) return;
+    sectionLinks.forEach(link => link.classList.toggle('active', link.dataset.section === visible.target.id));
+}, { rootMargin: '-18% 0px -62% 0px', threshold: [0.05, 0.2, 0.5] });
+
+observedSections.forEach(section => sectionObserver.observe(section));
+</script>
+<script>
+(function () {
+    const shell = document.querySelector('.app-shell');
+    const sidebar = document.querySelector('.sidebar');
+    const brand = document.getElementById('brandToggle');
+    const toggle = document.getElementById('sidebarToggle');
+    const storageKey = 'encca-sidebar-collapsed';
+
+    function setCollapsed(collapsed) {
+        shell.classList.toggle('sidebar-collapsed', collapsed);
+        sidebar.setAttribute('aria-expanded', String(!collapsed));
+        if (toggle) {
+            toggle.textContent = collapsed ? '›' : '‹';
+            toggle.title = collapsed ? 'Expand navigation' : 'Collapse navigation';
+            toggle.setAttribute('aria-label', collapsed ? 'Expand navigation' : 'Collapse navigation');
+        }
+        if (brand) brand.title = collapsed ? 'Expand navigation' : 'Collapse navigation';
+        localStorage.setItem(storageKey, collapsed ? '1' : '0');
+    }
+
+    const saved = localStorage.getItem(storageKey);
+    if (saved === '1') setCollapsed(true);
+
+    function toggleSidebar(e) {
+        if (e) e.stopPropagation();
+        setCollapsed(!shell.classList.contains('sidebar-collapsed'));
+    }
+
+    if (toggle) toggle.addEventListener('click', toggleSidebar);
+    if (brand) {
+        brand.addEventListener('click', function (e) {
+            if (e.target === toggle) return;
+            toggleSidebar(e);
+        });
+        brand.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleSidebar(e);
+            }
+        });
+    }
+})();
+</script>
+</body>
+</html>

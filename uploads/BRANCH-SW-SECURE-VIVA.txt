@@ -1,0 +1,102 @@
+!
+! ENCCA Viva Demo - Secure Cisco IOS Configuration
+! Demonstrates an improved compliance posture
+!
+hostname BRANCH-SW-SECURE
+
+enable secret 9 $9$DEMO-HASH-NOT-A-REAL-PASSWORD
+username encca-admin privilege 15 secret 9 $9$DEMO-HASH-NOT-A-REAL-PASSWORD
+
+aaa new-model
+aaa authentication login default local
+aaa authorization exec default local
+
+ip domain name encca.local
+crypto key generate rsa modulus 2048
+ip ssh version 2
+ip ssh authentication-retries 3
+ip ssh time-out 60
+
+no ip http server
+no ip http secure-server
+
+vlan 10
+ name INFRA
+vlan 20
+ name MANAGER
+vlan 30
+ name USER
+vlan 40
+ name VOICE
+vlan 99
+ name MANAGEMENT
+vlan 999
+ name UNUSED-NATIVE
+
+ip dhcp snooping
+ip dhcp snooping vlan 10,20,30,40,99
+ip arp inspection vlan 10,20,30,40,99
+
+logging host 10.10.10.10
+logging trap warnings
+ntp server 10.10.10.20
+
+interface Vlan99
+ description MANAGEMENT-SVI
+ ip address 10.99.10.10 255.255.255.0
+ no shutdown
+
+interface GigabitEthernet1/0/1
+ description USER-PORT-01
+ switchport mode access
+ switchport access vlan 30
+ switchport port-security
+ switchport port-security maximum 2
+ switchport port-security violation restrict
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ storm-control broadcast level 5.00
+ storm-control multicast level 5.00
+ no shutdown
+
+interface GigabitEthernet1/0/2
+ description USER-VOICE-PORT
+ switchport mode access
+ switchport access vlan 30
+ switchport voice vlan 40
+ switchport port-security
+ switchport port-security maximum 2
+ switchport port-security violation restrict
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ storm-control broadcast level 5.00
+ storm-control multicast level 5.00
+ no shutdown
+
+interface GigabitEthernet1/1/1
+ description APPROVED-UPLINK
+ switchport mode trunk
+ switchport trunk native vlan 999
+ switchport trunk allowed vlan 10,20,30,40,99,999
+ ip dhcp snooping trust
+ ip arp inspection trust
+ no shutdown
+
+interface GigabitEthernet1/0/23
+ description UNUSED
+ switchport mode access
+ switchport access vlan 999
+ shutdown
+
+ip access-list standard MGMT-ACL
+ permit 10.99.10.0 0.0.0.255
+
+line vty 0 4
+ transport input ssh
+ access-class MGMT-ACL in
+ exec-timeout 10 0
+
+snmp-server group ENCCA-SNMP v3 priv
+snmp-server user encca-monitor ENCCA-SNMP v3 auth sha DEMO-AUTH priv aes 128 DEMO-PRIV
+!
+end

@@ -1,0 +1,101 @@
+!
+
+!
+ip domain name example.local
+
+ip ssh time-out 60
+ip ssh authentication-retries 3
+!
+username netadmin privilege 15 secret 5 HASHED_VALUE
+enable secret 5 ENABLE_HASH
+login block-for 120 attempts 3 within 60
+!
+no ip http server
+no ip http secure-server
+!
+snmp-server group NMS-GROUP v3 priv
+snmp-server user NMSUSER NMS-GROUP v3 auth sha AUTHHASH priv aes 128 PRIVHASH
+!
+logging host 192.168.99.50
+ntp server 192.168.99.20
+!
+vlan 10
+ name INFRA
+vlan 20
+ name MANAGER
+vlan 30
+ name USER
+vlan 40
+ name VOICE
+vlan 99
+ name MANAGEMENT
+vlan 999
+ name UNUSED-NATIVE
+!
+ip dhcp snooping
+ip dhcp snooping vlan 10,20,30,40
+ip arp inspection vlan 10,20,30,40
+!
+interface Vlan99
+ description MANAGEMENT
+ ip address 192.168.99.10 255.255.255.0
+ no ip redirects
+ no ip proxy-arp
+ no shutdown
+!
+interface GigabitEthernet1/0/1
+ description USER-PC
+ switchport mode access
+ switchport access vlan 30
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security violation restrict
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ storm-control broadcast level 1.00 0.50
+ storm-control multicast level 1.00 0.50
+ ip dhcp snooping limit rate 15
+ ip verify source
+!
+interface GigabitEthernet1/0/2
+ description IP-PHONE-AND-PC
+ switchport mode access
+ switchport access vlan 30
+ switchport voice vlan 40
+ switchport port-security
+ switchport port-security maximum 2
+ switchport port-security violation restrict
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+!
+interface GigabitEthernet1/1/1
+ description UPLINK-TO-CORE
+ switchport mode trunk
+ switchport trunk native vlan 999
+ switchport trunk allowed vlan 10,20,30,40,99
+ ip dhcp snooping trust
+ ip arp inspection trust
+!
+interface GigabitEthernet1/0/23
+ description UNUSED
+ switchport mode access
+ switchport access vlan 999
+ shutdown
+!
+interface GigabitEthernet1/0/24
+ description UNUSED
+ switchport mode access
+ switchport access vlan 999
+ shutdown
+!
+line vty 0 15
+ login authentication default
+
+ access-class MGMT-ACCESS in
+ exec-timeout 10 0
+!
+ip access-list standard MGMT-ACCESS
+ permit 192.168.99.0 0.0.0.255
+ deny any log
+!
+end
