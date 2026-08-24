@@ -1,0 +1,1183 @@
+version 17.15
+service tcp-keepalives-in
+service tcp-keepalives-out
+service timestamps debug datetime
+service timestamps log datetime msec
+service password-encryption
+no service dhcp
+!
+hostname 700-GND-SWT-001
+!
+!
+vrf definition Mgmt-vrf
+ !
+ address-family ipv4
+ exit-address-family
+ !
+ address-family ipv6
+ exit-address-family
+!
+aaa new-model
+!
+!
+aaa group server radius ISE-HA
+ server name ISE1
+ server name ISE2
+!
+aaa group server tacacs+ ISE-DA-HA
+ server name ISE1
+ server name ISE2
+!
+aaa authentication login default group ISE-DA-HA local
+aaa authentication enable default group ISE-DA-HA enable
+aaa authentication dot1x default group ISE-HA
+aaa authorization exec default group ISE-DA-HA local
+aaa authorization network default group ISE-HA
+aaa accounting exec default start-stop group ISE-DA-HA group ISE-DA-HA
+aaa accounting commands 15 default start-stop group ISE-DA-HA
+!
+!
+aaa session-id common
+!
+!
+!
+clock timezone IST 5 30
+boot system switch all flash:packages.conf
+switch 1 provision c9200l-24p-4g
+software auto-upgrade enable
+!
+!
+!
+!
+!
+!
+ip name-server 10.18.40.34 10.18.40.33
+ip domain lookup source-interface Vlan10
+ip domain name dfcc.net
+!
+!
+!
+ip dhcp snooping vlan 10,20,30,40,50
+login on-failure log
+login on-success log
+vtp mode transparent
+!
+!
+!
+!
+!
+!
+crypto pki trustpoint SLA-TrustPoint
+ enrollment pkcs12
+ revocation-check crl
+ hash sha256
+!
+crypto pki trustpoint TP-self-signed-1471863059
+ enrollment selfsigned
+ subject-name cn=IOS-Self-Signed-Certificate-1471863059
+ revocation-check none
+ rsakeypair TP-self-signed-1471863059
+ hash sha256
+!
+crypto pki trustpoint DNAC-CA
+ enrollment mode ra
+ enrollment terminal
+ usage ssl-client
+ revocation-check none
+ source interface Vlan10
+ hash sha256
+!
+crypto pki trustpoint sdn-network-infra-iwan
+ enrollment url http://10.18.57.50:80/ejbca/publicweb/apply/scep/sdnscep
+ fqdn 700-GND-SWT-001.dfcc.net
+ subject-name CN=C9200L-24P-4G_FVH284310SG_sdn-network-infra-iwan
+ subject-alt-name 700-GND-SWT-001.dfcc.net
+ revocation-check crl
+ source interface Vlan10
+ rsakeypair sdn-network-infra-iwan
+ auto-enroll 80 regenerate
+ hash sha256
+!
+!
+crypto pki certificate chain SLA-TrustPoint
+ certificate ca 01
+  30820321 30820209 A0030201 02020101 300D0609 2A864886 F70D0101 0B050030
+  32310E30 0C060355 040A1305 43697363 6F312030 1E060355 04031317 43697363
+  6F204C69 63656E73 696E6720 526F6F74 20434130 1E170D31 33303533 30313934
+  3834375A 170D3338 30353330 31393438 34375A30 32310E30 0C060355 040A1305
+  43697363 6F312030 1E060355 04031317 43697363 6F204C69 63656E73 696E6720
+  526F6F74 20434130 82012230 0D06092A 864886F7 0D010101 05000382 010F0030
+  82010A02 82010100 A6BCBD96 131E05F7 145EA72C 2CD686E6 17222EA1 F1EFF64D
+  CBB4C798 212AA147 C655D8D7 9471380D 8711441E 1AAF071A 9CAE6388 8A38E520
+  1C394D78 462EF239 C659F715 B98C0A59 5BBB5CBD 0CFEBEA3 700A8BF7 D8F256EE
+  4AA4E80D DB6FD1C9 60B1FD18 FFC69C96 6FA68957 A2617DE7 104FDC5F EA2956AC
+  7390A3EB 2B5436AD C847A2C5 DAB553EB 69A9A535 58E9F3E3 C0BD23CF 58BD7188
+  68E69491 20F320E7 948E71D7 AE3BCC84 F10684C7 4BC8E00F 539BA42B 42C68BB7
+  C7479096 B4CB2D62 EA2F505D C7B062A4 6811D95B E8250FC4 5D5D5FB8 8F27D191
+  C55F0D76 61F9A4CD 3D992327 A8BB03BD 4E6D7069 7CBADF8B DF5F4368 95135E44
+  DFC7C6CF 04DD7FD1 02030100 01A34230 40300E06 03551D0F 0101FF04 04030201
+  06300F06 03551D13 0101FF04 05300301 01FF301D 0603551D 0E041604 1449DC85
+  4B3D31E5 1B3E6A17 606AF333 3D3B4C73 E8300D06 092A8648 86F70D01 010B0500
+  03820101 00507F24 D3932A66 86025D9F E838AE5C 6D4DF6B0 49631C78 240DA905
+  604EDCDE FF4FED2B 77FC460E CD636FDB DD44681E 3A5673AB 9093D3B1 6C9E3D8B
+  D98987BF E40CBD9E 1AECA0C2 2189BB5C 8FA85686 CD98B646 5575B146 8DFC66A8
+  467A3DF4 4D565700 6ADF0F0D CF835015 3C04FF7C 21E878AC 11BA9CD2 55A9232C
+  7CA7B7E6 C1AF74F6 152E99B7 B1FCF9BB E973DE7F 5BDDEB86 C71E3B49 1765308B
+  5FB0DA06 B92AFE7F 494E8A9E 07B85737 F3A58BE1 1A48A229 C37C1E69 39F08678
+  80DDCD16 D6BACECA EEBC7CF9 8428787B 35202CDC 60E4616A B623CDBD 230E3AFB
+  418616A9 4093E049 4D10AB75 27E86F73 932E35B5 8862FDAE 0275156F 719BB2F0
+  D697DF7F 28
+        quit
+crypto pki certificate chain TP-self-signed-1471863059
+ certificate self-signed 01
+  30820330 30820218 A0030201 02020101 300D0609 2A864886 F70D0101 0B050030
+  31312F30 2D060355 04030C26 494F532D 53656C66 2D536967 6E65642D 43657274
+  69666963 6174652D 31343731 38363330 3539301E 170D3235 30323139 31303131
+  34335A17 0D333530 32313931 30313134 335A3031 312F302D 06035504 030C2649
+  4F532D53 656C662D 5369676E 65642D43 65727469 66696361 74652D31 34373138
+  36333035 39308201 22300D06 092A8648 86F70D01 01010500 0382010F 00308201
+  0A028201 0100A6E2 99C72E2F D9698B39 8F7305E4 6CE82DB8 C404E4A5 969CA401
+  3EABAA9C D249E53D 4130AEE3 0E3F5B14 BFA0FAD8 10FFEA66 0F50CDCD A98F5D20
+  C227DC34 2965225E AF83EA23 D38AD6A2 7453DA30 2236551B 16CF448A 9FDB0BE0
+  EF030353 48525A24 32F785C8 DEAE20AE 47E59DF9 36D0ED90 BB0D079D E62FD75F
+  836A818B 1C770FFF 53730A3C 786532DF D36833E9 3E80D6CD 4001EC60 0842E3C8
+  F2A61378 B00F5DCC 07C3415F 205148A4 CAEC2708 62012F02 22CFD292 6F3E3B25
+  5C228C4D FEED1957 4BC89E3E CF1CFEB8 00A2EDDC 7371D81A 72D5AD65 0EE543D6
+  95D100B8 A5ABB2F8 59ED1CE7 5DE5D035 CB253D4C 895B6979 A6E3A890 DE7C3893
+  CABEE8E7 71CF0203 010001A3 53305130 1D060355 1D0E0416 0414167A 992EE46B
+  014B1425 9224C681 720EE3F0 30E7301F 0603551D 23041830 16801416 7A992EE4
+  6B014B14 259224C6 81720EE3 F030E730 0F060355 1D130101 FF040530 030101FF
+  300D0609 2A864886 F70D0101 0B050003 82010100 429FB900 1D2CF0DA 5FCB4BC9
+  8B783919 17CBF920 15DD38FC 42EC778C 80ECA502 E05CBAAC F5244A9E 150D0E36
+  43935AEA 497B4A21 B4C712E8 1BD44434 38F7EFB0 97090392 B9FA4F05 AD55179B
+  7B309849 076F090F 1CA12C6E 0D5E3C0D 5C0B739F 01EB7EA0 F4BBEFEA 7970534F
+  031D2E51 105DEBD6 697918C0 A65C1718 55496A8A 7FD98D67 F13FE9CF 68F62F2F
+  9F073CD4 6D072A2B FB43F82C AEB11D01 CA10AFFC 72A4B851 841FE608 22946E7F
+  0FF3ACAB 2334BC1C 89A407C6 284670D2 82684DF2 C48E8C82 19FD9DB4 7E7AF755
+  FC5053A8 0C2DCA43 CB2793BF 5B22A01F 8C73C960 DD82616C D181598A 02776546
+  2E9CDC5F 05EDDF92 36AABBEE 65661305 8851D7CD
+        quit
+crypto pki certificate chain DNAC-CA
+ certificate ca 7EBDBFB6F584F07265AE8F883AAD7E15092D077F
+  308203AD 30820295 A0030201 0202147E BDBFB6F5 84F07265 AE8F883A AD7E1509
+  2D077F30 0D06092A 864886F7 0D01010B 05003066 312D302B 06035504 030C2439
+  64336266 6631352D 35633433 2D656430 362D3866 62342D35 36393633 31343335
+  34633531 16301406 0355040A 0C0D4369 73636F20 53797374 656D7331 1D301B06
+  0355040B 0C144369 73636F20 444E4120 43656E74 65722045 7874301E 170D3235
+  30333033 31353134 35365A17 0D333530 33303131 35313435 365A3066 312D302B
+  06035504 030C2439 64336266 6631352D 35633433 2D656430 362D3866 62342D35
+  36393633 31343335 34633531 16301406 0355040A 0C0D4369 73636F20 53797374
+  656D7331 1D301B06 0355040B 0C144369 73636F20 444E4120 43656E74 65722045
+  78743082 0122300D 06092A86 4886F70D 01010105 00038201 0F003082 010A0282
+  010100B6 57C4C4BE 2BFBB12B 5AB2F999 EBC59466 F9AAB10D 89517AAB 359B897D
+  B035C828 924B6FC2 7A8A6974 AEC6401D BAB5E3CD DEDDF6EB 9A456E88 3E03F596
+  F428B9E2 D29901AB C7287A6E C27FAA7C 5010938C 076206FF EA88DF1D 15D89690
+  2D7961E7 7A3D845D E9E02A24 40994849 428313DB 3EBF9BB9 8B6E91FC 1D501A50
+  2A3D1152 BFC7BC7E C94D6699 6C3007FC 86BE10C0 0540F074 1973E0F5 7F3E3407
+  A258D0C5 E099E74A C1ABFFDF B1C006BF FC81BAAA 6C68C65B 2FCAD427 E3E5B245
+  6C4E3FDA 8B7B958B 4EE237AC 9669766A 2BC62C20 6CCEB0A1 9A0C0006 F3FBA14B
+  2B694840 0E75083C BF189925 A6D1CD3D F71B110D ECC41781 2DC5D3DB DE512078
+  2A6FF302 03010001 A3533051 301D0603 551D0E04 160414E1 0D589192 C83611EC
+  8FDBF661 B3612522 F1768C30 1F060355 1D230418 30168014 E10D5891 92C83611
+  EC8FDBF6 61B36125 22F1768C 300F0603 551D1301 01FF0405 30030101 FF300D06
+  092A8648 86F70D01 010B0500 03820101 00285A22 EA2A3439 4A2B2933 4CD80AC1
+  3E9D8644 6C1A34C7 0DB7A1D5 CD1F10C2 F9FC84CB 75B7D45A 1C8B0BFE 3A69A411
+  D17AC85D 407251FD 87C1C09C D26CB0DD F624771C 47BE3228 8E76A328 C2471346
+  F1107E7C 0FBBB253 9F8E175D BE190B0F 78986637 D01A8AD2 F93BFBC2 B09234FC
+  9DEFD33E 1CA1CAE9 E871A53C 923D576D 6056BEB7 F8436A05 9CC74B4F 6BF3F7C0
+  63213676 2CD98537 A85BC166 D540909A FBDA356B 2F0D8D98 EBAF3F8C 2A0F8C47
+  0BB47A64 3C38CEF0 5AC5C911 4485CB50 B1C0693F 820C0A52 2DBAE6EA E9548C37
+  FA054E50 CD15883C E9854984 B311A39D 6A3AFE2A 0143658C 866A9F20 7DE6BDFE
+  F5398E87 168A3344 47A452E4 F23185C2 9D
+        quit
+crypto pki certificate chain sdn-network-infra-iwan
+ certificate 4AEA6E08D14714795176F30A8CD367EDADBCFB68
+  30820390 30820278 A0030201 0202144A EA6E08D1 47147951 76F30A8C D367EDAD
+  BCFB6830 0D06092A 864886F7 0D01010D 0500301F 311D301B 06035504 030C1473
+  646E2D6E 6574776F 726B2D69 6E667261 2D636130 1E170D32 35303430 31303830
+  3634355A 170D3236 30343031 30383036 34355A30 64312730 2506092A 864886F7
+  0D010902 0C183730 302D474E 442D5357 542D3030 312E6466 63632E6E 65743139
+  30370603 5504030C 30433932 30304C2D 3234502D 34475F46 56483238 34333130
+  53475F73 646E2D6E 6574776F 726B2D69 6E667261 2D697761 6E308201 22300D06
+  092A8648 86F70D01 01010500 0382010F 00308201 0A028201 010088DF 56477E52
+  9A98C1DE 867D5F69 B5B09A8E 08C7C094 C926B9BB 14EA80F7 B5B2ED68 652D6773
+  2A09685F 0B60495D BE41FD6F 9B5DC500 5695443E 28B29130 ED96D577 18A57030
+  9F17D61C 2D7A1AF5 45803D78 E892DEB4 B9199C23 27FA2097 8E5AC9A1 0B348A84
+  16636F4B 044DF5C8 1D234511 ED3BCCE0 7A2AB2FC BE8EEED9 E77CF6A0 385BFAA1
+  32613B92 79951389 F8B55DEF 9897212A 28A5FD78 894FF6F7 6D3BA8B6 A42BF262
+  98203945 2BC9552A 46D1F6AF 84BC3659 02D2E960 F3155691 9F015B69 60FA1361
+  431EF093 CD5FD41E B6E735F6 E8A43BBB FDCB994E 47C177CC 7908BBBB BB02EEAF
+  9AD1C9AC B82EEF5D 801F77F8 2A1A3637 454AB02C E64A8328 0F4D0203 010001A3
+  7F307D30 0C060355 1D130101 FF040230 00301F06 03551D23 04183016 8014ACBA
+  F527A764 0A3DA00D 5455F9AA 13DCE718 A26B301D 0603551D 25041630 1406082B
+  06010505 07030206 082B0601 05050703 04301D06 03551D0E 04160414 B51E163D
+  FA94A916 6580F494 9528FF05 F52A6025 300E0603 551D0F01 01FF0404 030205E0
+  300D0609 2A864886 F70D0101 0D050003 82010100 59E05744 33A7798B B544A40E
+  F91C418A CF4201BC 7A691189 5878CB9B F9CB8FB1 589CD91E 2FF4DAC8 C8E9CF74
+  3DD71424 0D7314EC 53FF7AD3 79B20F6F ADBB4CA9 C946975E 6C43D058 BE8D3E66
+  C8CDDD06 A80635A8 7D8CAD0A 48959E6C 60D636E4 3AADE13B 949B0102 4BFE0636
+  5B1C3AAC 85D36C5D BC344F8C 1570C4B3 BF27A25B 3C307F00 50D85F60 7AE299DF
+  FA1B6983 ECEA2D24 B11B7920 BBC04E67 133B89FB 4022A207 4FF17E40 A1627FE3
+  46972043 E82666B7 E77C1958 0DA44B4F D2DEB3DB 1840979E EDC5B5B2 3133FC40
+  B3DCA42B D0366BD7 A278A941 5584F067 0897F031 FC677D89 CFA27ABC 1EBF0A7A
+  369B6185 593625FF D62DAA43 B0175C13 F6F957C5
+        quit
+ certificate ca 3E0008769EA0E8834EA8780AA1E311E2AC307A8E
+  3082032F 30820217 A0030201 0202143E 0008769E A0E8834E A8780AA1 E311E2AC
+  307A8E30 0D06092A 864886F7 0D01010D 0500301F 311D301B 06035504 030C1473
+  646E2D6E 6574776F 726B2D69 6E667261 2D636130 1E170D32 34313131 36303231
+  3933315A 170D3434 31313136 30323139 33305A30 1F311D30 1B060355 04030C14
+  73646E2D 6E657477 6F726B2D 696E6672 612D6361 30820122 300D0609 2A864886
+  F70D0101 01050003 82010F00 3082010A 02820101 00C86B0A 00B5B6AE 05828E6E
+  DB0AF3C8 B40009C5 D9CA83C4 64FF1C84 43E1A3E3 3EDCE2BF 08A7F23A 698625AF
+  50935C45 DF0BF719 8AF13F20 6C0DD0CD 53A5198C 425C8BCD 056EE233 5DFB7072
+  57001225 4AEE349F 26928036 851B0506 7966BAAF BB4F22DF 7C2DB080 90F249CA
+  4F58ABCF 0ABC2D1C FAA0B5C6 678E3D42 13590206 E06AD5C3 2F6181E6 27154C5F
+  E09A176C 87B883A8 D395B0A4 F263B3E2 EFAD8559 8972B895 FE8C194E F5F24FDD
+  698C7B37 F9EFD482 6E5ADFCF F58567E7 8F5738A4 9ED321D3 399FBFE8 59218A9C
+  EBB478DA 38B30B5B BF4EC0CA 3E280DC5 7D7C1F8F D3F7C2B1 4C80B03E 46D27500
+  EC227887 EC825F12 A27A3C8C 64F2C4F6 1990FDBC 25020301 0001A363 3061300F
+  0603551D 130101FF 04053003 0101FF30 1F060355 1D230418 30168014 ACBAF527
+  A7640A3D A00D5455 F9AA13DC E718A26B 301D0603 551D0E04 160414AC BAF527A7
+  640A3DA0 0D5455F9 AA13DCE7 18A26B30 0E060355 1D0F0101 FF040403 02018630
+  0D06092A 864886F7 0D01010D 05000382 01010037 2A16A142 D48F8372 D1D2EDF8
+  6931A98B C14096FC 9FA01F6C 8BAE37C4 DCCC60F4 8D84A99E 1D772545 AA4027D1
+  6CCAF6C9 9B7F049C E66E52FB 29B6632A 50942B88 82144B88 1D03FC11 DDBC9B71
+  91F5ACD1 7C8F517A CE7BA4D5 B53CA97C BE01C4C7 C4340B58 75E1FF31 4CBE080E
+  480ABE52 E028AC9B 31122235 49866ABF AD0595AA E2A0D265 FEF317B1 F9D1D049
+  CE6F8B07 2E634600 6DFFEDF7 68FBB6F6 15EE3EBB DF3A3411 0F25D99D 287C0326
+  57914698 B4BE1871 DB957A16 964E39C2 893E72CD 01D0BB54 8D63C551 CD07380E
+  D56731F4 B6D41D01 DEEB8E16 FA88BDB2 FDA4503C DF042728 32182146 CCE7AD04
+  0DE4C636 72C23201 5075D9BE 52B81691 431890
+        quit
+!
+license boot level network-essentials addon dna-essentials
+dot1x system-auth-control
+memory free low-watermark processor 8237
+!
+diagnostic bootup level minimal
+!
+spanning-tree mode rapid-pvst
+spanning-tree extend system-id
+!
+!
+!
+enable secret 9 $9$33W/ZeIFdN6gg.$m3DDUW2n2z4BTRnOPcBNSghFXeJU0snY0yCDauedwkY
+!
+username cisco privilege 15 secret 9 $9$c.kU.znb/zT9bU$MbqTS5VhRhmPqfqxAZ5SJ5dHr/xq6OnudcQZu1MRTeI
+username netmgr secret 9 $9$GxsBxC9DKy34BC$IegzVfXMJRqDBjRPb/2JjRFy5CJrQo7RaTorTDg2Tko
+username ncinga secret 9 $9$Q5DUit4wwHe9Uk$wOG5a9WV1rG5tQkseJFn2Tm2Fo6mb/cgGnSyDEw7lf2
+!
+redundancy
+ mode sso
+crypto engine compliance shield disable
+!
+!
+!
+!
+!
+transceiver type all
+ monitoring
+!
+vlan 10
+ name INFRA
+!
+vlan 20
+ name MGR-PC
+!
+vlan 30
+ name USER-PC
+!
+vlan 40
+ name Cisco-Voice
+!
+vlan 50
+ name ATM
+!
+vlan 60
+ name CCTV_SLT
+!
+!
+class-map match-any system-cpp-police-ewlc-control
+ description EWLC Control
+class-map match-any system-cpp-police-topology-control
+ description Topology control
+class-map match-any system-cpp-police-sw-forward
+ description Sw forwarding, L2 LVX data packets, LOGGING, Transit Traffic
+class-map match-any system-cpp-default
+ description EWLC data, Inter FED Traffic
+class-map match-any system-cpp-police-sys-data
+ description Openflow, Exception, EGR Exception, NFL Sampled Data, RPF Failed
+class-map match-any system-cpp-police-punt-webauth
+ description Punt Webauth
+class-map match-any system-cpp-police-l2lvx-control
+ description L2 LVX control packets
+class-map match-any system-cpp-police-forus
+ description Forus traffic
+class-map match-any system-cpp-police-multicast-end-station
+ description MCAST END STATION
+class-map match-any system-cpp-police-forus-addr-resolution
+ description Forus Address resolution
+class-map match-any system-cpp-police-high-rate-app
+ description High Rate Applications
+class-map match-any system-cpp-police-multicast
+ description MCAST Data
+class-map match-any system-cpp-police-meraki-next-tunnel
+ description Meraki Next tunnel
+class-map match-any system-cpp-police-l2-control
+ description L2 control
+class-map match-any system-cpp-police-dot1x-auth
+ description DOT1X Auth
+class-map match-any system-cpp-police-data
+ description ICMP redirect, ICMP_GEN and BROADCAST
+class-map match-any system-cpp-police-stackwise-virt-control
+ description Stackwise Virtual OOB
+class-map match-any non-client-nrt-class
+class-map match-any system-cpp-police-routing-control
+ description Routing control and Low Latency
+class-map match-any system-cpp-police-protocol-snooping
+ description Protocol snooping
+class-map match-any system-cpp-police-dhcp-snooping
+ description DHCP snooping
+class-map match-any system-cpp-police-ios-routing
+ description L2 control, Topology control, Routing control, Low Latency
+class-map match-any system-cpp-police-system-critical
+ description System Critical and Gold Pkt
+class-map match-any system-cpp-police-ios-feature
+ description ICMPGEN,BROADCAST,ICMP,L2LVXCntrl,ProtoSnoop,PuntWebauth,MCASTData,Transit,DOT1XAuth,Swfwd,LOGGING,L2LVXData,ForusTraffic,ForusARP,McastEndStn,Openflow,Exception,EGRExcption,NflSampled,RpfFailed
+!
+policy-map system-cpp-policy
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+interface GigabitEthernet0/0
+ vrf forwarding Mgmt-vrf
+ no ip address
+ shutdown
+!
+interface GigabitEthernet1/0/1
+ description ### USER/IP-Phone ###
+ switchport access vlan 30
+ switchport mode access
+ switchport voice vlan 40
+ ip access-group PRE_AUTH_ACL in
+ authentication host-mode multi-auth
+ authentication order mab dot1x
+ authentication priority dot1x mab
+ authentication port-control auto
+ mab
+ dot1x pae authenticator
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!
+interface GigabitEthernet1/0/2
+ description ### USER/IP-Phone ###
+ switchport access vlan 30
+ switchport mode access
+ switchport voice vlan 40
+ ip access-group PRE_AUTH_ACL in
+ authentication host-mode multi-auth
+ authentication order mab dot1x
+ authentication priority dot1x mab
+ authentication port-control auto
+ mab
+ dot1x pae authenticator
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!
+interface GigabitEthernet1/0/3
+ description ### USER/IP-Phone ###
+ switchport access vlan 30
+ switchport mode access
+ switchport voice vlan 40
+ ip access-group PRE_AUTH_ACL in
+ authentication host-mode multi-auth
+ authentication order mab dot1x
+ authentication priority dot1x mab
+ authentication port-control auto
+ mab
+ dot1x pae authenticator
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!
+interface GigabitEthernet1/0/4
+ description ### USER/IP-Phone ###
+ switchport access vlan 30
+ switchport mode access
+ switchport voice vlan 40
+ ip access-group PRE_AUTH_ACL in
+ authentication host-mode multi-auth
+ authentication order mab dot1x
+ authentication priority dot1x mab
+ authentication port-control auto
+ mab
+ dot1x pae authenticator
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!
+interface GigabitEthernet1/0/5
+ description ### USER/IP-Phone ###
+ switchport access vlan 30
+ switchport mode access
+ switchport voice vlan 40
+ authentication host-mode multi-auth
+ authentication open
+ authentication order mab dot1x
+ authentication priority dot1x mab
+ authentication port-control auto
+ mab
+ dot1x pae authenticator
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!
+interface GigabitEthernet1/0/6
+ description ### VP/Manager ###
+ switchport access vlan 30
+ switchport mode access
+ switchport voice vlan 40
+ ip access-group PRE_AUTH_ACL in
+ authentication host-mode multi-auth
+ authentication order mab dot1x
+ authentication priority dot1x mab
+ authentication port-control auto
+ mab
+ dot1x pae authenticator
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!
+interface GigabitEthernet1/0/7
+ description ### USER/IP-Phone ###
+ switchport access vlan 30
+ switchport mode access
+ switchport voice vlan 40
+ ip access-group PRE_AUTH_ACL in
+ authentication host-mode multi-auth
+ authentication order mab dot1x
+ authentication priority dot1x mab
+ authentication port-control auto
+ mab
+ dot1x pae authenticator
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!
+interface GigabitEthernet1/0/8
+ description ### USER/IP-Phone ###
+ switchport access vlan 30
+ switchport mode access
+ switchport voice vlan 40
+ ip access-group PRE_AUTH_ACL in
+ authentication host-mode multi-auth
+ authentication order mab dot1x
+ authentication priority dot1x mab
+ authentication port-control auto
+ mab
+ dot1x pae authenticator
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!
+interface GigabitEthernet1/0/9
+ description ### USER/IP-Phone ###
+ switchport access vlan 30
+ switchport mode access
+ switchport voice vlan 40
+ ip access-group PRE_AUTH_ACL in
+ authentication host-mode multi-auth
+ authentication order mab dot1x
+ authentication priority dot1x mab
+ authentication port-control auto
+ mab
+ dot1x pae authenticator
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!
+interface GigabitEthernet1/0/10
+ description ### USER/IP-Phone ###
+ switchport access vlan 30
+ switchport mode access
+ switchport voice vlan 40
+ ip access-group PRE_AUTH_ACL in
+ authentication host-mode multi-auth
+ authentication order mab dot1x
+ authentication priority dot1x mab
+ authentication port-control auto
+ mab
+ dot1x pae authenticator
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!
+interface GigabitEthernet1/0/11
+ description ### USER/IP-Phone ###
+ switchport access vlan 10
+ switchport mode access
+ authentication host-mode multi-auth
+ authentication open
+ authentication order mab dot1x
+ authentication priority dot1x mab
+ authentication port-control auto
+ mab
+ dot1x pae authenticator
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!
+interface GigabitEthernet1/0/12
+ description ### USER/IP-Phone ###
+ switchport access vlan 30
+ switchport mode access
+ switchport voice vlan 40
+ ip access-group PRE_AUTH_ACL in
+ authentication host-mode multi-auth
+ authentication order mab dot1x
+ authentication priority dot1x mab
+ authentication port-control auto
+ mab
+ dot1x pae authenticator
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!
+interface GigabitEthernet1/0/13
+ description ### USER/IP-Phone ###
+ switchport access vlan 30
+ switchport mode access
+ switchport voice vlan 40
+ ip access-group PRE_AUTH_ACL in
+ authentication host-mode multi-auth
+ authentication order mab dot1x
+ authentication priority dot1x mab
+ authentication port-control auto
+ mab
+ dot1x pae authenticator
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!
+interface GigabitEthernet1/0/14
+ description ### CCTV ACCESS ###
+ switchport access vlan 60
+ switchport mode access
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!
+interface GigabitEthernet1/0/15
+ description ### INFRA ###
+ switchport access vlan 10
+ switchport mode access
+ switchport port-security maximum 2
+ switchport port-security violation restrict
+ switchport port-security mac-address sticky
+ switchport port-security
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!
+interface GigabitEthernet1/0/16
+ description ### INFRA ###
+ switchport access vlan 10
+ switchport mode access
+ switchport port-security maximum 2
+ switchport port-security violation restrict
+ switchport port-security mac-address sticky
+ switchport port-security mac-address sticky 1098.1905.56ca
+ switchport port-security
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!
+interface GigabitEthernet1/0/17
+ description ### INFRA ###
+ switchport access vlan 10
+ switchport mode access
+ switchport port-security maximum 2
+ switchport port-security violation restrict
+ switchport port-security mac-address sticky
+ switchport port-security
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!
+interface GigabitEthernet1/0/18
+ description ### INFRA ###
+ switchport access vlan 30
+ switchport mode access
+ ip access-group PRE_AUTH_ACL in
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!
+interface GigabitEthernet1/0/19
+ description ### INFRA ###
+ switchport access vlan 10
+ switchport mode access
+ switchport port-security maximum 2
+ switchport port-security violation restrict
+ switchport port-security mac-address sticky
+ switchport port-security
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!
+interface GigabitEthernet1/0/20
+ description ### USER/IP-Phone ###
+ switchport access vlan 30
+ switchport mode access
+ switchport voice vlan 40
+ authentication host-mode multi-auth
+ authentication open
+ authentication order mab dot1x
+ authentication priority dot1x mab
+ authentication port-control auto
+ mab
+ dot1x pae authenticator
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!
+interface GigabitEthernet1/0/21
+ description ##BoardRoom##
+ switchport access vlan 30
+ switchport mode access
+ switchport voice vlan 40
+ authentication host-mode multi-auth
+ authentication open
+ authentication order mab dot1x
+ authentication priority dot1x mab
+ authentication port-control auto
+ mab
+ dot1x pae authenticator
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!
+interface GigabitEthernet1/0/22
+ description ### USER/IP-Phone ###
+ switchport access vlan 30
+ switchport mode access
+ switchport voice vlan 40
+ ip access-group PRE_AUTH_ACL in
+ authentication host-mode multi-auth
+ authentication order mab dot1x
+ authentication priority dot1x mab
+ authentication port-control auto
+ mab
+ dot1x pae authenticator
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!
+interface GigabitEthernet1/0/23
+ description ### DOWNLINK_PRC-GND-SWT-002_GigabitEthernet1/0/23 ###
+ switchport trunk allowed vlan 10,20,30,40,50,60
+ switchport mode trunk
+ ip dhcp snooping trust
+!
+interface GigabitEthernet1/0/24
+ description ### UPLINK_PRC-GND-SWT-003_GigabitEthernet1/0/23 ###
+ switchport mode trunk
+ ip dhcp snooping trust
+!
+interface GigabitEthernet1/1/1
+ shutdown
+!
+interface GigabitEthernet1/1/2
+ shutdown
+!
+interface GigabitEthernet1/1/3
+ shutdown
+!
+interface GigabitEthernet1/1/4
+ shutdown
+!
+interface Bluetooth0/4
+ vrf forwarding Mgmt-vrf
+ no ip address
+ shutdown
+ negotiation auto
+ enable
+!
+interface Vlan1
+ no ip address
+ shutdown
+!
+interface Vlan10
+ description ### Management VLAN ###
+ ip address 172.22.1.16 255.255.255.192
+!
+ip default-gateway 172.22.1.62
+no ip http server
+ip http authentication local
+no ip http secure-server
+ip http client source-interface Vlan10
+ip forward-protocol nd
+ip tacacs source-interface Vlan10
+ip ssh bulk-mode 131072
+ip ssh time-out 60
+ip ssh source-interface Vlan10
+!
+ip access-list extended PRE_AUTH_ACL
+ 10 permit udp any eq bootpc any eq bootps
+ 20 permit udp any eq bootps any eq bootpc
+ 30 permit udp any any eq domain
+ 40 permit tcp any any eq domain
+ 50 permit tcp any eq domain any
+ 60 permit udp any eq domain any
+ 70 permit ip any host 192.168.40.59
+ 80 permit ip host 192.168.40.59 any
+ 90 permit ip any host 192.168.40.33
+ 100 permit ip host 192.168.40.33 any
+ 110 permit ip any host 10.18.40.59
+ 120 permit ip host 10.18.40.59 any
+ 130 permit ip any host 10.18.40.33
+ 140 permit ip host 10.18.40.33 any
+ 150 permit ip any host 10.18.40.34
+ 160 permit ip host 10.18.40.34 any
+ 170 permit ip any host 192.168.40.34
+ 180 permit ip host 192.168.40.34 any
+ 190 permit tcp any any eq 3389
+ 200 permit tcp any eq 3389 any
+ 210 permit icmp any any
+ 220 deny ip any any
+logging source-interface Vlan10
+logging host 192.168.40.195 transport udp port 30012
+logging host 10.18.40.195 transport udp port 30012
+logging host 10.18.57.50
+snmp-server group default v3 priv
+snmp-server trap-source Vlan10
+snmp-server enable traps snmp authentication linkdown linkup coldstart warmstart
+snmp-server enable traps flowmon
+snmp-server enable traps entity-perf throughput-notif
+snmp-server enable traps call-home message-send-fail server-fail
+snmp-server enable traps tty
+snmp-server enable traps eigrp
+snmp-server enable traps ospf state-change
+snmp-server enable traps ospf errors
+snmp-server enable traps ospf retransmit
+snmp-server enable traps ospf lsa
+snmp-server enable traps ospf cisco-specific state-change nssa-trans-change
+snmp-server enable traps ospf cisco-specific state-change shamlink interface
+snmp-server enable traps ospf cisco-specific state-change shamlink neighbor
+snmp-server enable traps ospf cisco-specific errors
+snmp-server enable traps ospf cisco-specific retransmit
+snmp-server enable traps ospf cisco-specific lsa
+snmp-server enable traps bfd
+snmp-server enable traps smart-license
+snmp-server enable traps auth-framework sec-violation
+snmp-server enable traps rep
+snmp-server enable traps aaa_server
+snmp-server enable traps memory bufferpeak
+snmp-server enable traps config-copy
+snmp-server enable traps config
+snmp-server enable traps config-ctid
+snmp-server enable traps energywise
+snmp-server enable traps fru-ctrl
+snmp-server enable traps entity
+snmp-server enable traps flash insertion removal lowspace
+snmp-server enable traps power-ethernet group 1 threshold 80
+snmp-server enable traps power-ethernet police
+snmp-server enable traps cpu threshold
+snmp-server enable traps syslog
+snmp-server enable traps udld link-fail-rpt
+snmp-server enable traps udld status-change
+snmp-server enable traps vtp
+snmp-server enable traps vlancreate
+snmp-server enable traps vlandelete
+snmp-server enable traps port-security
+snmp-server enable traps envmon
+snmp-server enable traps stackwise
+snmp-server enable traps dhcp
+snmp-server enable traps event-manager
+snmp-server enable traps ike policy add
+snmp-server enable traps ike policy delete
+snmp-server enable traps ike tunnel start
+snmp-server enable traps ike tunnel stop
+snmp-server enable traps ipsec cryptomap add
+snmp-server enable traps ipsec cryptomap delete
+snmp-server enable traps ipsec cryptomap attach
+snmp-server enable traps ipsec cryptomap detach
+snmp-server enable traps ipsec tunnel start
+snmp-server enable traps ipsec tunnel stop
+snmp-server enable traps ipsec too-many-sas
+snmp-server enable traps ospfv3 state-change
+snmp-server enable traps ospfv3 errors
+snmp-server enable traps ipmulticast
+snmp-server enable traps pimstdmib neighbor-loss invalid-register invalid-join-prune rp-mapping-change interface-election
+snmp-server enable traps msdp
+snmp-server enable traps pim neighbor-change rp-mapping-change invalid-pim-message
+snmp-server enable traps bridge newroot topologychange
+snmp-server enable traps stpx inconsistency root-inconsistency loop-inconsistency
+snmp-server enable traps cef resource-failure peer-state-change peer-fib-state-change inconsistency
+snmp-server enable traps bulkstat collection transfer
+snmp-server enable traps mac-notification change move threshold
+snmp-server enable traps errdisable
+snmp-server enable traps vlan-membership
+snmp-server enable traps transceiver all
+snmp-server enable traps vrfmib vrf-up vrf-down vnet-trunk-up vnet-trunk-down
+snmp-server enable traps rf
+snmp-server host 10.18.57.50 version 3 priv DNAC_SNMP_User
+tacacs server ISE1
+ address ipv4 192.168.57.65
+ key 7 0802455D0A16544541
+tacacs server ISE2
+ address ipv4 10.18.57.65
+ key 7 0802455D0A16544541
+!
+radius server ISE1
+ address ipv4 192.168.57.65 auth-port 1812 acct-port 1813
+ key 7 05280F1C22431F5B4A
+!
+radius server ISE2
+ address ipv4 10.18.57.65 auth-port 1812 acct-port 1813
+ key 7 05280F1C22431F5B4A
+!
+!
+!
+control-plane
+ service-policy input system-cpp-policy
+!
+banner login ^C
+*****************************************************************************
+*                                WARNING:                                   *
+* Access to this Information System or Device is restricted to authorized   *
+* users only. All activities within the systems or Devices would be         *
+* monitored and recorded.Using the Information System or Device without     *
+* valid authorization, or in excess of provided authorization, is subject   *
+* to disciplinary action or legal prosecution. If you are not authorized    *
+* to access this Information System or Device, please do not proceed.       *
+* Usage may be monitored.                                                   *
+*****************************************************************************
+^C
+!
+line con 0
+line vty 0 15 ; access-class <MGMT-ACL> in
+ stopbits 1
+line vty 0 4
+ transport input ssh
+line vty 5 15
+ transport input ssh
+!
+ntp server 192.168.40.54
+ntp server 10.18.40.54
+!
+!
+!
+!
+!
+!
+netconf-yang
+telemetry ietf subscription 500
+ encoding encode-tdl
+ filter tdl-uri /services;serviceName=ios_oper/poe_port_detail
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy periodic 60000
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 501
+ encoding encode-tdl
+ filter tdl-uri /services;serviceName=ios_oper/poe_module
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy periodic 60000
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 502
+ encoding encode-tdl
+ filter tdl-uri /services;serviceName=ios_oper/poe_stack
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy periodic 60000
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 503
+ encoding encode-tdl
+ filter tdl-uri /services;serviceName=ios_oper/poe_switch
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy periodic 60000
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 504
+ encoding encode-tdl
+ filter nested-uri /services;serviceName=ios_oper/platform_component;cname=0?platform_properties
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy periodic 30000
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 550
+ encoding encode-tdl
+ filter tdl-uri /services;serviceName=smevent/sessionevent
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy on-change
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 551
+ encoding encode-tdl
+ filter tdl-uri /services;serviceName=sessmgr_oper/session_context_data
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy periodic 360000
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 552
+ encoding encode-tdl
+ filter tdl-uri /services;serviceName=iosevent/sisf_mac_oper_state
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy on-change
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 553
+ encoding encode-tdl
+ filter tdl-uri /services;serviceName=ios_oper/sisf_db_wired_mac
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy periodic 360000
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 554
+ encoding encode-tdl
+ filter tdl-uri /services;serviceName=ios_oper/cdp_neighbor_detail
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy periodic 360000
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 555
+ encoding encode-tdl
+ filter tdl-uri /services;serviceName=ios_oper/cdp_neighbor_detail
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy on-change
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 600
+ encoding encode-tdl
+ filter tdl-uri /services;serviceName=sessmgr_oper/tbl_aaa_servers_stat
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy periodic 60000
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 601
+ encoding encode-tdl
+ filter tdl-uri /services;serviceName=sessmgr_oper/tbl_aaa_servers_stat
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy on-change
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 602
+ encoding encode-tdl
+ filter tdl-uri /services;serviceName=ios_emul_oper/lisp_routers;top_id=0/sessions
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy periodic 360000
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 603
+ encoding encode-tdl
+ filter tdl-uri /services;serviceName=iosevent/lisp_tcp_session_state
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy on-change
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 604
+ encoding encode-tdl
+ filter nested-uri /services;serviceName=ios_emul_oper/lisp_routers;top_id=0/instances;iid=0/af;iaftype=LISP_TDL_IAF_IPV4/lisp_publisher
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy periodic 360000
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 605
+ encoding encode-tdl
+ filter tdl-uri /services;serviceName=iosevent/lisp_pubsub_session_state
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy on-change
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 606
+ encoding encode-tdl
+ filter nested-uri /services;serviceName=ios_emul_oper/lisp_routers;top_id=0/remote_locator_sets;name=default-etr-locator-set-ipv4/rem_loc_set_rlocs_si
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy periodic 360000
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 607
+ encoding encode-tdl
+ filter tdl-uri /services;serviceName=iosevent/lisp_etr_si_type
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy on-change
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 608
+ encoding encode-tdl
+ filter tdl-uri /services;serviceName=ios_emul_oper/cts_env_data
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy periodic 60000
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 609
+ encoding encode-tdl
+ filter tdl-uri /services;serviceName=ios_emul_oper/bgp_state;singleton_id=0/neighbor
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy periodic 360000
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 610
+ encoding encode-tdl
+ filter tdl-uri /services;serviceName=ios_emul_oper/bgp_state;singleton_id=0/neighbor
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy on-change
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 611
+ encoding encode-tdl
+ filter tdl-uri /services;serviceName=iosevent/lisp_extranet_policy_state
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy on-change
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 612
+ encoding encode-tdl
+ filter nested-uri /services;serviceName=ios_emul_oper/lisp_routers;top_id=0/instances;iid=1/extranets
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy periodic 360000
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 613
+ encoding encode-tdl
+ filter nested-uri /services;serviceName=ios_emul_oper/lisp_routers;top_id=0/instances;iid=1/extranets;extranet_name=ext1/extranet_member_instances
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy periodic 360000
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 614
+ encoding encode-tdl
+ filter nested-uri /services;serviceName=ios_oper/nve_oper;unit_number=0/nve_vni_oper
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy periodic 960000
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 615
+ encoding encode-tdl
+ filter nested-uri /services;serviceName=ios_oper/nve_oper;unit_number=0/nve_peer_oper
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy periodic 960000
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 616
+ encoding encode-tdl
+ filter nested-uri /services;serviceName=ios_oper/nve_oper
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy on-change
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 750
+ encoding encode-tdl
+ filter tdl-uri /services;serviceName=ios_emul_oper/environment_sensor
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy periodic 30000
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 751
+ encoding encode-tdl
+ filter tdl-uri /services;serviceName=ios_oper/platform_component
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy periodic 30000
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 1020
+ encoding encode-tdl
+ filter tdl-uri /services;serviceName=iosevent/install_status
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy on-change
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry ietf subscription 8882
+ encoding encode-tdl
+ filter tdl-transform trustSecCounterDelta
+ receiver-type protocol
+ source-address 172.22.1.16
+ stream native
+ update-policy periodic 90000
+ receiver name DNAC_ASSURANCE_RECEIVER
+telemetry receiver protocol DNAC_ASSURANCE_RECEIVER
+ host ip-address 10.18.57.50 25103
+ protocol tls-native profile sdn-network-infra-iwan
+telemetry transform trustSecCounterDelta
+ input table cts_rolebased_policy
+  field dst_sgt
+  field src_sgt
+  field sgacl_name
+  field monitor_mode
+  field num_of_sgacl
+  field policy_life_time
+  field total_deny_count
+  field last_updated_time
+  field total_permit_count
+  join-key cts_role_based_policy_key
+  logical-op and
+  type mandatory
+  uri /services;serviceName=ios_emul_oper/cts_rolebased_policy
+ operation 1
+  output-field 1
+   field cts_rolebased_policy.src_sgt
+  output-field 2
+   field cts_rolebased_policy.dst_sgt
+  output-field 3
+   field cts_rolebased_policy.total_permit_count
+   output-op type delta
+  output-field 4
+   field cts_rolebased_policy.total_deny_count
+   output-op type delta
+  output-field 5
+   field cts_rolebased_policy.sgacl_name
+  output-field 6
+   field cts_rolebased_policy.monitor_mode
+  output-field 7
+   field cts_rolebased_policy.num_of_sgacl
+  output-field 8
+   field cts_rolebased_policy.policy_life_time
+  output-field 9
+   field cts_rolebased_policy.last_updated_time
+ specified
+git checkout -b branch-name 
+git checkout
