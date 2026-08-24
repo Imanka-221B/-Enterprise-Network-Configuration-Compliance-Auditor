@@ -49,6 +49,7 @@
             <a class="nav-item" href="{{ url_for('audit_history') }}">
                 <span class="nav-icon">◷</span><span class="nav-text">Audit History</span>
             </a>
+            {% if current_user and current_user.role == 'admin' %}<a class="nav-item" href="{{ url_for('users') }}"><span class="nav-icon">◉</span><span class="nav-text">Users</span></a>{% endif %}
         </nav>
 
         <div class="sidebar-spacer"></div>
@@ -65,7 +66,8 @@
             <div class="topbar-right">
                 <span class="environment-chip"><span class="status-dot"></span> Local Audit</span>
                 <span class="engine-status"><span class="status-dot"></span> System Operational</span>
-                <span class="user-chip"><span class="avatar">A</span> Administrator</span>
+                <span class="user-chip"><span class="avatar">{{ current_user.username[0]|upper }}</span>{{ current_user.username }} · {{ 'Administrator' if current_user.role == 'admin' else 'Security Analyst' }}</span>
+                <a class="logout-link" href="{{ url_for('logout') }}">Logout</a>
             </div>
         </header>
 

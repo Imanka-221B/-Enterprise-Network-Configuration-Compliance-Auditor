@@ -1,13 +1,20 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, send_file, abort
+from flask import Flask, render_template, request, redirect, url_for, flash, send_file, abort, g, session
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import os
 import tempfile
 import uuid
+import re
+from werkzeug.utils import secure_filename
 from parser.cisco_parser import parse_cisco_config
 from audit.compliance_engine import audit_configuration, summarize_findings, load_rules
 from scoring.risk_engine import assess_findings
+from database.auth import (
+    admin_required, authenticate, create_user, csrf_token, get_current_user,
+    init_auth, is_safe_url, list_users, login_required, reset_password,
+    set_user_status, update_user,
+)
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -26,14 +33,51 @@ REPORT_DIR = RUNTIME_DIR / "reports" / "generated"
 ALLOWED_EXTENSIONS = {".txt", ".cfg", ".conf"}
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", "encca-development-key")
+secret_key = os.environ.get("FLASK_SECRET_KEY")
+if not secret_key and os.environ.get("VERCEL"):
+    raise RuntimeError("FLASK_SECRET_KEY must be configured for a Vercel deployment.")
+app.config["SECRET_KEY"] = secret_key or "encca-local-development-only-key"
 app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = bool(os.environ.get("VERCEL") or os.environ.get("FLASK_HTTPS"))
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=60)
 for directory in (UPLOAD_DIR, AUDIT_RECORD_DIR, REPORT_DIR):
     directory.mkdir(parents=True, exist_ok=True)
+init_auth(app, RUNTIME_DIR / "private" / "encca_auth.sqlite3")
+
+AUDIT_ID_PATTERN = re.compile(r"^[a-f0-9]{12}$")
 
 
 def allowed_file(filename):
     return Path(filename).suffix.lower() in ALLOWED_EXTENSIONS
+
+
+def audit_access_allowed(audit):
+    """Admins can see all records; analysts can only see their own records."""
+    user = get_current_user()
+    if user is None:
+        return False
+    if user["role"] == "admin":
+        return True
+    performed_by = audit.get("performed_by") or {}
+    return performed_by.get("user_id") == user["id"]
+
+
+def get_audit_record(audit_id):
+    if not AUDIT_ID_PATTERN.fullmatch(audit_id):
+        abort(404)
+    record_path = AUDIT_RECORD_DIR / f"{audit_id}.json"
+    if not record_path.exists():
+        abort(404)
+    try:
+        audit = json.loads(record_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        abort(404)
+    if not audit_access_allowed(audit):
+        # Use 404 so authenticated users cannot enumerate another user's audits.
+        abort(404)
+    return audit
 
 
 def load_audit_history():
@@ -43,6 +87,8 @@ def load_audit_history():
         try:
             audit = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
+            continue
+        if not audit_access_allowed(audit):
             continue
 
         summary = audit.get("summary", {})
@@ -61,6 +107,7 @@ def load_audit_history():
             "risk_level": risk_summary.get("risk_level", "Low"),
             "risk_percentage": risk_summary.get("risk_percentage", 0),
             "finding_count": risk_summary.get("failed_count", summary.get("failed", 0)),
+            "performed_by": (audit.get("performed_by") or {}).get("username", "Legacy Audit"),
         })
 
     def history_sort_key(item):
@@ -74,6 +121,7 @@ def load_audit_history():
 
 
 @app.route("/", methods=["GET", "POST"])
+@login_required
 def upload():
     if request.method == "POST":
         file = request.files.get("config_file")
@@ -86,7 +134,10 @@ def upload():
             flash("Only .txt, .cfg and .conf files are supported.")
             return redirect(url_for("upload"))
 
-        safe_name = Path(file.filename).name
+        safe_name = secure_filename(Path(file.filename).name)
+        if not safe_name:
+            flash("Please select a valid Cisco configuration file.")
+            return redirect(url_for("upload"))
         audit_id = uuid.uuid4().hex[:12]
         # Keep each upload separate. This prevents two users uploading a file
         # with the same name from overwriting each other's configuration.
@@ -167,11 +218,21 @@ def upload():
             "category_risk": category_risk,
             "statistics": statistics,
             "audit_time": datetime.now().strftime("%d %b %Y, %H:%M"),
+            "user_id": g.current_user["id"],
+            "username": g.current_user["username"],
+            "performed_by": {
+                "user_id": g.current_user["id"],
+                "username": g.current_user["username"],
+            },
         }
-        (AUDIT_RECORD_DIR / f"{audit_id}.json").write_text(
-            json.dumps(audit_record, default=str, indent=2),
-            encoding="utf-8"
-        )
+        try:
+            (AUDIT_RECORD_DIR / f"{audit_id}.json").write_text(
+                json.dumps(audit_record, default=str, indent=2), encoding="utf-8"
+            )
+        except OSError:
+            app.logger.exception("Could not save audit record %s", audit_id)
+            flash("The audit completed but its confidential result could not be saved. Please try again.")
+            return redirect(url_for("upload"))
 
         return render_template(
             "result.html",
@@ -191,6 +252,7 @@ def upload():
 
 
 @app.route("/audit-history")
+@login_required
 def audit_history():
     records = load_audit_history()
     query = request.args.get("q", "").strip().lower()
@@ -228,12 +290,10 @@ def audit_history():
 
 
 @app.route("/audit/<audit_id>")
+@login_required
 def audit_result(audit_id):
     """Re-open a completed audit using its persisted audit record."""
-    record_path = AUDIT_RECORD_DIR / f"{audit_id}.json"
-    if not record_path.exists():
-        abort(404)
-    audit = json.loads(record_path.read_text(encoding="utf-8"))
+    audit = get_audit_record(audit_id)
     return render_template(
         "result.html",
         audit_id=audit_id,
@@ -249,21 +309,16 @@ def audit_result(audit_id):
 
 
 @app.route("/audit-report/<audit_id>")
+@login_required
 def audit_report(audit_id):
-    record_path = AUDIT_RECORD_DIR / f"{audit_id}.json"
-    if not record_path.exists():
-        abort(404)
-    audit = json.loads(record_path.read_text(encoding="utf-8"))
+    audit = get_audit_record(audit_id)
     return render_template("report.html", audit=audit)
 
 
 @app.route("/audit-report/<audit_id>/download")
+@login_required
 def download_audit_report(audit_id):
-    record_path = AUDIT_RECORD_DIR / f"{audit_id}.json"
-    if not record_path.exists():
-        abort(404)
-
-    audit = json.loads(record_path.read_text(encoding="utf-8"))
+    audit = get_audit_record(audit_id)
     pdf_path = REPORT_DIR / f"ENCCA_Audit_Report_{audit_id}.pdf"
 
     try:
@@ -288,6 +343,133 @@ def download_audit_report(audit_id):
         download_name=f"ENCCA_Audit_Report_{audit_id}.pdf",
         mimetype="application/pdf"
     )
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if get_current_user() is not None:
+        return redirect(url_for("upload"))
+    provisioning_required = not any(user["role"] == "admin" for user in list_users())
+    if request.method == "POST":
+        user = authenticate(request.form.get("identity", ""), request.form.get("password", ""))
+        if user is None:
+            flash("Invalid username or password.")
+            return render_template("login.html", provisioning_required=provisioning_required), 401
+        # Clearing prior values prevents session fixation and a new CSRF token
+        # is created on the next form render.
+        session.clear()
+        session.permanent = True
+        session["user_id"] = user["id"]
+        session["username"] = user["username"]
+        session["role"] = user["role"]
+        session["authenticated"] = True
+        destination = request.form.get("next") or request.args.get("next")
+        return redirect(destination if is_safe_url(destination) else url_for("upload"))
+    return render_template("login.html", provisioning_required=provisioning_required)
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    """Public self-registration creates analyst accounts only, never admins."""
+    if get_current_user() is not None:
+        return redirect(url_for("upload"))
+    if request.method == "POST":
+        if request.form.get("password") != request.form.get("confirm_password"):
+            flash("Password confirmation does not match.")
+        else:
+            ok, message = create_user(
+                request.form.get("username", ""),
+                request.form.get("email", ""),
+                request.form.get("password", ""),
+                role="analyst",
+            )
+            flash(message)
+            if ok:
+                return redirect(url_for("login"))
+    return render_template("register.html")
+
+
+@app.route("/logout")
+@login_required
+def logout():
+    session.clear()
+    flash("You have been signed out.")
+    return redirect(url_for("login"))
+
+
+@app.route("/users")
+@admin_required
+def users():
+    return render_template("users.html", users=list_users())
+
+
+@app.route("/users/create", methods=["GET", "POST"])
+@admin_required
+def create_user_route():
+    if request.method == "POST":
+        if request.form.get("password") != request.form.get("confirm_password"):
+            flash("Password confirmation does not match.")
+        else:
+            ok, message = create_user(
+                request.form.get("username", ""), request.form.get("email", ""),
+                request.form.get("password", ""), request.form.get("role", "analyst"),
+            )
+            flash(message)
+            if ok:
+                return redirect(url_for("users"))
+    return render_template("user_form.html", user=None, mode="create")
+
+
+@app.route("/users/<int:user_id>/edit", methods=["GET", "POST"])
+@admin_required
+def edit_user(user_id):
+    from database.auth import get_user
+    user = get_user(user_id)
+    if user is None:
+        abort(404)
+    if request.method == "POST":
+        ok, message = update_user(
+            user_id, request.form.get("email", ""), request.form.get("role", ""),
+            request.form.get("is_active") == "1", g.current_user["id"],
+        )
+        flash(message)
+        if ok:
+            return redirect(url_for("users"))
+        user = get_user(user_id)
+    return render_template("user_form.html", user=user, mode="edit")
+
+
+@app.route("/users/<int:user_id>/toggle-status", methods=["POST"])
+@admin_required
+def toggle_user_status(user_id):
+    from database.auth import get_user
+    user = get_user(user_id)
+    if user is None:
+        abort(404)
+    ok, message = set_user_status(user_id, not bool(user["is_active"]), g.current_user["id"])
+    flash(message)
+    return redirect(url_for("users"))
+
+
+@app.route("/users/<int:user_id>/reset-password", methods=["POST"])
+@admin_required
+def reset_user_password(user_id):
+    if request.form.get("password") != request.form.get("confirm_password"):
+        flash("Password confirmation does not match.")
+    else:
+        _ok, message = reset_password(user_id, request.form.get("password", ""))
+        flash(message)
+    return redirect(url_for("edit_user", user_id=user_id))
+
+
+@app.errorhandler(400)
+def bad_request(_error):
+    return "The request could not be processed.", 400
+
+
+@app.errorhandler(403)
+def forbidden(_error):
+    return "You are not authorized to access this resource.", 403
 
 
 if __name__ == "__main__":
