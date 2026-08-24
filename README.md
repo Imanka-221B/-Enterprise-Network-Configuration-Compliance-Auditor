@@ -153,3 +153,58 @@ python -m pip install -r requirements.txt
 ```
 
 This installs Flask and ReportLab required by the PDF download feature.
+
+## Authentication & Security
+
+ENCCA protects all audit, history and report routes with server-side Flask session authentication. Uploaded Cisco configurations and their derived findings are accessible only after sign-in.
+
+### Roles
+
+- **Administrator**: performs audits and manages users, roles, account status and password resets.
+- **Security Analyst**: performs audits and can view only audits attributed to their account.
+
+Visitors may register a **Security Analyst** account from the Login page, then sign in. Public registration can never create an administrator; administrator accounts remain controlled by the secure bootstrap process or an existing administrator.
+
+Passwords are never stored in plaintext. ENCCA uses Werkzeug's current secure password hashing implementation. Passwords must have at least 12 characters and include uppercase, lowercase, numeric and special characters. Five consecutive invalid attempts lock an account for 15 minutes; all authentication failures use the same generic response.
+
+### First administrator
+
+ENCCA creates an administrator only on first run, only when no administrator exists, and only when all of these environment variables are configured. No default credentials exist.
+
+```text
+FLASK_SECRET_KEY=<long-random-secret>
+ENCCA_ADMIN_USERNAME=<initial-admin-username>
+ENCCA_ADMIN_EMAIL=<initial-admin-email>
+ENCCA_ADMIN_PASSWORD=<strong-password-meeting-policy>
+```
+
+For local PowerShell development, set the values before starting the app:
+
+```powershell
+$env:FLASK_SECRET_KEY = "replace-with-a-long-random-secret"
+$env:ENCCA_ADMIN_USERNAME = "initial-admin"
+$env:ENCCA_ADMIN_EMAIL = "admin@example.invalid"
+$env:ENCCA_ADMIN_PASSWORD = "ReplaceWithAStrongPassword!1"
+python app.py
+```
+
+Use `.env.example` only as a placeholder guide; do not commit a real `.env` file. After the initial login, administrators create additional accounts from **Users** in the ENCCA interface.
+
+### Session and request security
+
+Sessions are HTTP-only, `SameSite=Lax`, expire after one hour, and use secure cookies automatically on Vercel/HTTPS. Every state-changing form (login, upload and user management) carries a cryptographically random CSRF token. Login return URLs are restricted to local ENCCA paths.
+
+### Vercel
+
+Set all four environment variables above in **Vercel Project Settings → Environment Variables** for Production, Preview and Development as appropriate. `FLASK_SECRET_KEY` is mandatory on Vercel; ENCCA intentionally refuses to run with a development secret there.
+
+Vercel Functions use temporary filesystem storage. Consequently, the JSON audit records, generated PDFs and the SQLite authentication database are ephemeral and can disappear when a function instance is recycled. The bootstrap variables recreate only the initial administrator; independently created users and audit history need durable storage for a production multi-instance deployment. This project intentionally does not add an external cloud database/API.
+
+### Tests
+
+Install dependencies and run all parser, compliance, risk, PDF and authentication tests with:
+
+```bash
+python -m pip install -r requirements.txt
+python -m pytest -q
+```

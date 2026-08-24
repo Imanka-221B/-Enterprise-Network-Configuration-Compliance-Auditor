@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ENCCA | Secure Sign In</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="login-body">
+<main class="login-layout">
+    <section class="login-brand-panel">
+        <div class="brand-mark">EN</div>
+        <div class="eyebrow">SECURE ACCESS</div>
+        <h1>ENCCA</h1>
+        <p>Enterprise Network Configuration Compliance Auditor</p>
+        <div class="login-security-notice">Authorized users only. Cisco network configuration data may contain confidential information.</div>
+    </section>
+    <section class="login-card-wrap">
+        <form class="login-card" method="post" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="next" value="{{ request.args.get('next', '') }}">
+            <div class="section-kicker">ENCCA IDENTITY</div>
+            <h2>Sign in to ENCCA</h2>
+            <p class="login-intro">Use your assigned username or email address to access confidential audit data.</p>
+            {% with messages = get_flashed_messages() %}{% if messages %}<div class="alert error-alert">{% for message in messages %}<div>{{ message }}</div>{% endfor %}</div>{% endif %}{% endwith %}
+            {% if provisioning_required %}<div class="alert info-alert">No administrator has been provisioned. Configure the ENCCA_ADMIN_* environment variables, then restart the application.</div>{% endif %}
+            <label class="auth-label" for="identity">Username or email</label>
+            <input class="auth-input" id="identity" name="identity" autocomplete="username" required autofocus>
+            <label class="auth-label" for="password">Password</label>
+            <div class="password-field"><input class="auth-input" id="password" name="password" type="password" autocomplete="current-password" required><button type="button" id="togglePassword" aria-label="Show password">Show</button></div>
+            <button class="primary-button login-button" type="submit">Sign in securely</button>
+            <p class="login-register-link">New to ENCCA? <a href="{{ url_for('register') }}">Create a Security Analyst account</a></p>
+        </form>
+    </section>
+</main>
+<script>document.getElementById('togglePassword').addEventListener('click',function(){const p=document.getElementById('password'),show=p.type==='password';p.type=show?'text':'password';this.textContent=show?'Hide':'Show';this.setAttribute('aria-label',show?'Hide password':'Show password')});</script>
+</body>
+</html>

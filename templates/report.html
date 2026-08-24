@@ -27,13 +27,14 @@
   </nav>
   <div class="nav-label">REPORTING</div><nav class="side-nav">
     <a class="nav-item active" href="{{ url_for('audit_report', audit_id=audit.audit_id) }}"><span class="nav-icon">▤</span><span class="nav-text">Audit Report</span></a>
+    {% if current_user and current_user.role == 'admin' %}<a class="nav-item" href="{{ url_for('users') }}"><span class="nav-icon">◉</span><span class="nav-text">Users</span></a>{% endif %}
   </nav>
   <div class="sidebar-spacer"></div><div class="system-status"><span class="status-dot"></span><span>Report ready</span></div>
   <div class="sidebar-footer">ENCCA v5 · UI v2.0 · Compliance v2.1 · Risk v1.0</div>
 </aside>
 <main class="main-area">
 <header class="topbar"><div class="topbar-left"><span class="mobile-brand">ENCCA</span><span class="breadcrumb">Reporting <b>/</b> Audit Report <b>/</b> {{ audit.data.hostname or audit.filename }}</span></div>
-<div class="topbar-right"><span class="environment-chip"><span class="status-dot"></span> Local Audit</span><span class="engine-status"><span class="status-dot"></span> System Operational</span><span class="user-chip"><span class="avatar">A</span> Administrator</span></div></header>
+<div class="topbar-right"><span class="environment-chip"><span class="status-dot"></span> Local Audit</span><span class="engine-status"><span class="status-dot"></span> System Operational</span><span class="user-chip"><span class="avatar">{{ current_user.username[0]|upper }}</span>{{ current_user.username }} · {{ 'Administrator' if current_user.role == 'admin' else 'Security Analyst' }}</span><a class="logout-link" href="{{ url_for('logout') }}">Logout</a></div></header>
 <section class="page-content report-page">
 <div class="page-heading"><div><div class="eyebrow">REPORTING</div><h1>Audit Report</h1><p>Professional security and configuration assessment for <strong>{{ audit.data.hostname or audit.filename }}</strong>.</p></div>
 <div class="heading-actions"><a class="secondary-button" href="{{ url_for('audit_result', audit_id=audit.audit_id) }}">← Audit Results</a><a class="primary-button" href="{{ url_for('download_audit_report', audit_id=audit.audit_id) }}">↓ Download PDF Report</a></div></div>

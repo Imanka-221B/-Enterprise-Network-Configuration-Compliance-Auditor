@@ -1,0 +1,8 @@
+.env
+private/
+*.sqlite3
+*.sqlite3-journal
+*.sqlite3-wal
+__pycache__/
+.pytest_cache/
+.test-tmp/

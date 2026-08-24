@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ENCCA | Register</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="login-body"><main class="login-layout">
+    <section class="login-brand-panel"><div class="brand-mark">EN</div><div class="eyebrow">AUTHORIZED ACCESS</div><h1>ENCCA</h1><p>Enterprise Network Configuration Compliance Auditor</p><div class="login-security-notice">Registration creates a Security Analyst account. Administrator accounts are provisioned and managed separately.</div></section>
+    <section class="login-card-wrap"><form class="login-card" method="post" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="section-kicker">CREATE ACCOUNT</div><h2>Register for ENCCA</h2><p class="login-intro">Use your organization-approved details. Your password must have 12+ characters with uppercase, lowercase, numeric and special characters.</p>
+        {% with messages = get_flashed_messages() %}{% if messages %}<div class="alert error-alert">{% for message in messages %}<div>{{ message }}</div>{% endfor %}</div>{% endif %}{% endwith %}
+        <label class="auth-label" for="username">Username</label><input class="auth-input" id="username" name="username" autocomplete="username" required autofocus>
+        <label class="auth-label" for="email">Email address</label><input class="auth-input" id="email" name="email" type="email" autocomplete="email" required>
+        <label class="auth-label" for="password">Password</label><div class="password-field"><input class="auth-input" id="password" name="password" type="password" autocomplete="new-password" required><button type="button" id="togglePassword" aria-label="Show password">Show</button></div>
+        <label class="auth-label" for="confirmPassword">Confirm password</label><input class="auth-input" id="confirmPassword" name="confirm_password" type="password" autocomplete="new-password" required>
+        <button class="primary-button login-button" type="submit">Create analyst account</button><p class="login-register-link">Already registered? <a href="{{ url_for('login') }}">Sign in</a></p>
+    </form></section>
+</main><script>document.getElementById('togglePassword').addEventListener('click',function(){const p=document.getElementById('password'),show=p.type==='password';p.type=show?'text':'password';this.textContent=show?'Hide':'Show';this.setAttribute('aria-label',show?'Hide password':'Show password')});</script></body></html>

@@ -31,6 +31,7 @@
         <nav class="side-nav">
             <a class="nav-item" href="{{ url_for('upload') }}"><span class="nav-icon">▤</span><span class="nav-text">Audit Report</span></a>
             <a class="nav-item active" href="{{ url_for('audit_history') }}"><span class="nav-icon">◷</span><span class="nav-text">Audit History</span></a>
+            {% if current_user and current_user.role == 'admin' %}<a class="nav-item" href="{{ url_for('users') }}"><span class="nav-icon">◉</span><span class="nav-text">Users</span></a>{% endif %}
         </nav>
         <div class="sidebar-spacer"></div>
         <div class="system-status"><span class="status-dot"></span><span>Audit engine ready</span></div>
@@ -40,7 +41,7 @@
     <main class="main-area">
         <header class="topbar">
             <div class="topbar-left"><span class="mobile-brand">ENCCA</span><span class="breadcrumb">Reporting <b>/</b> Audit History</span></div>
-            <div class="topbar-right"><span class="environment-chip"><span class="status-dot"></span> Local Audit</span><span class="engine-status"><span class="status-dot"></span> System Operational</span><span class="user-chip"><span class="avatar">A</span> Administrator</span></div>
+            <div class="topbar-right"><span class="environment-chip"><span class="status-dot"></span> Local Audit</span><span class="engine-status"><span class="status-dot"></span> System Operational</span><span class="user-chip"><span class="avatar">{{ current_user.username[0]|upper }}</span>{{ current_user.username }} · {{ 'Administrator' if current_user.role == 'admin' else 'Security Analyst' }}</span><a class="logout-link" href="{{ url_for('logout') }}">Logout</a></div>
         </header>
 
         <section class="page-content history-page">
@@ -79,12 +80,13 @@
                 {% if records %}
                 <div class="history-table-wrap">
                     <table class="history-table">
-                        <thead><tr><th>DEVICE</th><th>CONFIGURATION</th><th>COMPLIANCE</th><th>RISK</th><th>FINDINGS</th><th>COMPLETED</th><th>ACTIONS</th></tr></thead>
+                        <thead><tr><th>DEVICE</th><th>CONFIGURATION</th><th>PERFORMED BY</th><th>COMPLIANCE</th><th>RISK</th><th>FINDINGS</th><th>COMPLETED</th><th>ACTIONS</th></tr></thead>
                         <tbody>
                         {% for record in records %}
                         <tr>
                             <td><strong>{{ record.hostname }}</strong><span class="history-id">{{ record.audit_id }}</span></td>
                             <td><span class="history-file">{{ record.filename }}</span></td>
+                            <td>{{ record.performed_by }}</td>
                             <td><span class="history-score {% if record.compliance_score >= 80 %}good{% elif record.compliance_score >= 50 %}watch{% else %}poor{% endif %}">{{ record.compliance_score }}%</span><span class="history-sub">{{ record.passed }}/{{ record.applicable }} passed</span></td>
                             <td><span class="risk-badge risk-{{ record.risk_level|lower }}">{{ record.risk_level }}</span><span class="history-sub">{{ record.risk_percentage }}% risk</span></td>
                             <td><strong>{{ record.finding_count }}</strong><span class="history-sub">{{ record.failed }} failed</span></td>
