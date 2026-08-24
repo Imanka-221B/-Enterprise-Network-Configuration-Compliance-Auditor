@@ -1,0 +1,1 @@
+{"audit_id": "abcdef123456", "filename": "legacy.cfg", "data": {"hostname": "LEGACY-SW"}, "summary": {"compliance_score": 100, "evaluated": 1, "passed": 1, "failed": 0, "not_applicable": 0}, "risk": {"summary": {"risk_level": "Low", "risk_percentage": 0, "failed_count": 0}}, "audit_time": "01 Jan 2026, 00:00"}
