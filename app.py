@@ -3,6 +3,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 import json
 import os
+import secrets
 import tempfile
 import uuid
 import re
@@ -35,7 +36,10 @@ ALLOWED_EXTENSIONS = {".txt", ".cfg", ".conf"}
 app = Flask(__name__)
 secret_key = os.environ.get("FLASK_SECRET_KEY")
 if not secret_key and os.environ.get("VERCEL"):
-    raise RuntimeError("FLASK_SECRET_KEY must be configured for a Vercel deployment.")
+    app.logger.warning(
+        "FLASK_SECRET_KEY is not configured; using a temporary key for this function instance."
+    )
+    secret_key = secrets.token_urlsafe(32)
 app.config["SECRET_KEY"] = secret_key or "encca-local-development-only-key"
 app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024
 app.config["SESSION_COOKIE_HTTPONLY"] = True
