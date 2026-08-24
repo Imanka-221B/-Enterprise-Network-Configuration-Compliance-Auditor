@@ -6,6 +6,7 @@ import os
 import tempfile
 import uuid
 import re
+import secrets
 from werkzeug.utils import secure_filename
 from parser.cisco_parser import parse_cisco_config
 from audit.compliance_engine import audit_configuration, summarize_findings, load_rules
@@ -34,9 +35,12 @@ ALLOWED_EXTENSIONS = {".txt", ".cfg", ".conf"}
 
 app = Flask(__name__)
 secret_key = os.environ.get("FLASK_SECRET_KEY")
-if not secret_key and os.environ.get("VERCEL"):
-    raise RuntimeError("FLASK_SECRET_KEY must be configured for a Vercel deployment.")
-app.config["SECRET_KEY"] = secret_key or "encca-local-development-only-key"
+missing_production_secret = not secret_key and bool(os.environ.get("VERCEL"))
+# Never serve ENCCA without a real production secret. A process-local fallback
+# lets Flask render a clear 503 configuration page instead of crashing the
+# Vercel Function before a useful response can be returned.
+app.config["SECRET_KEY"] = secret_key or (secrets.token_urlsafe(48) if missing_production_secret else "encca-local-development-only-key")
+app.config["ENCCA_CONFIGURATION_ERROR"] = missing_production_secret
 app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
@@ -44,6 +48,14 @@ app.config["SESSION_COOKIE_SECURE"] = bool(os.environ.get("VERCEL") or os.enviro
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=60)
 for directory in (UPLOAD_DIR, AUDIT_RECORD_DIR, REPORT_DIR):
     directory.mkdir(parents=True, exist_ok=True)
+
+
+@app.before_request
+def require_production_secret():
+    if app.config["ENCCA_CONFIGURATION_ERROR"] and request.endpoint != "static":
+        return render_template("configuration_error.html"), 503
+
+
 init_auth(app, RUNTIME_DIR / "private" / "encca_auth.sqlite3")
 
 AUDIT_ID_PATTERN = re.compile(r"^[a-f0-9]{12}$")

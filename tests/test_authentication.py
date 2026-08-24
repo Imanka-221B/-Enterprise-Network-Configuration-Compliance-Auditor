@@ -50,6 +50,13 @@ def test_login_page_loads(client):
     assert b"Sign in to ENCCA" in response.data
 
 
+def test_missing_vercel_secret_returns_safe_configuration_page(client, monkeypatch):
+    monkeypatch.setitem(app_module.app.config, "ENCCA_CONFIGURATION_ERROR", True)
+    response = client.get("/")
+    assert response.status_code == 503
+    assert b"FLASK_SECRET_KEY" in response.data
+
+
 def test_user_can_register_then_login_as_analyst(client):
     token = csrf_token(client, "/register")
     response = client.post(

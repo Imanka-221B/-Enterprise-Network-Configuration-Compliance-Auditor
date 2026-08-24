@@ -198,6 +198,8 @@ Sessions are HTTP-only, `SameSite=Lax`, expire after one hour, and use secure co
 
 Set all four environment variables above in **Vercel Project Settings → Environment Variables** for Production, Preview and Development as appropriate. `FLASK_SECRET_KEY` is mandatory on Vercel; ENCCA intentionally refuses to run with a development secret there.
 
+If `FLASK_SECRET_KEY` is missing, ENCCA returns a safe **503 Configuration Required** page rather than exposing an application crash. Generate a value with, for example, `python -c "import secrets; print(secrets.token_urlsafe(48))"` and store that value only in Vercel's encrypted environment-variable settings.
+
 Vercel Functions use temporary filesystem storage. Consequently, the JSON audit records, generated PDFs and the SQLite authentication database are ephemeral and can disappear when a function instance is recycled. The bootstrap variables recreate only the initial administrator; independently created users and audit history need durable storage for a production multi-instance deployment. This project intentionally does not add an external cloud database/API.
 
 ### Tests
