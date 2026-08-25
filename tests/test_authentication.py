@@ -107,6 +107,23 @@ def test_valid_login_hashes_password_and_logout(client):
     assert client.get("/").status_code == 302
 
 
+def test_expired_session_can_refresh_and_login_without_deleting_user(client):
+    add_user()
+    assert login(client).status_code == 302
+
+    with client.session_transaction() as stored_session:
+        stored_session.clear()
+
+    response = client.get("/")
+    assert response.status_code == 302
+    assert "/login?next=/" in response.headers["Location"]
+    assert client.get(response.headers["Location"]).status_code == 200
+    with app_module.app.app_context():
+        assert get_user(1) is not None
+    assert login(client).status_code == 302
+    assert client.get("/").status_code == 200
+
+
 def test_invalid_login_is_generic_and_counts_attempts(client):
     add_user()
     response = login(client, password="WrongPassword!1")

@@ -167,6 +167,8 @@ Visitors may register a **Security Analyst** account from the Login page, then s
 
 Passwords are never stored in plaintext. ENCCA uses Werkzeug's current secure password hashing implementation. Passwords must have at least 12 characters and include uppercase, lowercase, numeric and special characters. Five consecutive invalid attempts lock an account for 15 minutes; all authentication failures use the same generic response.
 
+User accounts are stored in `private/encca_auth.sqlite3` and are not removed when a user logs out or a session expires. To select another persistent SQLite location, set `ENCCA_AUTH_DATABASE` to its full path before starting the application. A session timeout only requires signing in again; it does not affect the account or password.
+
 ### First administrator
 
 ENCCA creates an administrator only on first run, only when no administrator exists, and only when all of these environment variables are configured. No default credentials exist.

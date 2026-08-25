@@ -28,6 +28,7 @@ RUNTIME_DIR = (
     if os.environ.get("VERCEL")
     else BASE_DIR
 )
+AUTH_DATABASE = Path(os.environ.get("ENCCA_AUTH_DATABASE", BASE_DIR / "private" / "encca_auth.sqlite3"))
 UPLOAD_DIR = RUNTIME_DIR / "uploads"
 AUDIT_RECORD_DIR = RUNTIME_DIR / "audit_records"
 REPORT_DIR = RUNTIME_DIR / "reports" / "generated"
@@ -56,7 +57,7 @@ def require_production_secret():
         return render_template("configuration_error.html"), 503
 
 
-init_auth(app, RUNTIME_DIR / "private" / "encca_auth.sqlite3")
+init_auth(app, AUTH_DATABASE)
 
 AUDIT_ID_PATTERN = re.compile(r"^[a-f0-9]{12}$")
 
