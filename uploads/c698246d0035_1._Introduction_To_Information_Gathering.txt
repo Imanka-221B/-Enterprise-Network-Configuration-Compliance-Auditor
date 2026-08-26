@@ -1,0 +1,581 @@
+
+
+Introduction to
+Information Gathering.
+
+In this video, we're going
+to get a formal introduction
+
+to information gathering.
+
+We're going to learn more
+about it, what it entails,
+
+and that the two types
+of information gathering,
+
+or reconnaissance, that's a
+word that you'll typically see
+
+interchanged with
+information gathering.
+
+So whenever you hear information
+gathering, or reconnaissance,
+
+buddied around, just know
+that they're essentially
+
+referring to the same
+thing or the same process.
+
+So what is
+information gathering?
+
+Well, the first
+thing that you need
+
+to know about
+information gathering
+
+is it is the first phase
+of any penetration test.
+
+And it essentially involves
+gathering or collecting
+
+information about an individual,
+company, or website, or system
+
+that you are targeting.
+
+Now this can be a
+little bit confusing.
+
+Because you may be
+thinking to yourself, well,
+
+where do we start?
+
+Well, again, that statement
+is a bit misleading.
+
+Because I'm referring
+to a lot of targets.
+
+Well, let's say a
+company has hired
+
+you to perform a penetration
+test on their website,
+
+for example.
+
+Well, during the first phase
+of a penetration test, which
+
+is information
+gathering, our objective
+
+is to essentially learn
+more about the website
+
+that we are performing
+the penetration test on.
+
+So what does this mean?
+
+Well, we need to identify
+what web technology is
+
+being used on the website.
+
+We need to identify
+any vulnerabilities
+
+that website may have.
+
+We need to know more about the
+IP address of the server that's
+
+hosting that website.
+
+And we're essentially getting
+a better understanding
+
+of what we are targeting.
+
+And as I said, this can
+be as wide or as narrow,
+
+depending on the scope
+of your penetration test.
+
+Let's take another example.
+
+Let's say you have
+been contracted
+
+to perform a penetration
+test for a company.
+
+And they've given
+you a scope, where
+
+you can target a few public
+facing assets, like a web
+
+server that's hosting
+a website, and also,
+
+maybe a couple of
+internal systems
+
+within the internal network.
+
+Well, we can gain access
+to the internal network
+
+probably through the
+public facing asset,
+
+like the web server.
+
+That may be one vector,
+one access vector.
+
+Or alternatively, during the
+information gathering phase,
+
+we can start learning more
+about the employees that
+
+work for the company.
+
+And what do I mean by this?
+
+Well, the most important piece
+of information in this context
+
+would be to identify their
+names and their email addresses.
+
+Well, what do we do
+with that information?
+
+Or why is this
+information so important?
+
+Well, when we move on to the
+latter stages of a penetration
+
+test, like exploitation
+or initial access,
+
+this is where this information
+starts becoming useful.
+
+Because for example, instead
+of exploiting the web server
+
+in order to gain
+access to their network
+
+and consequently
+their internal network
+
+through a pivot, what we
+can do is try and perform
+
+a phishing attack on
+one of the employees
+
+to obtain their credentials.
+
+Alternatively, we could
+send a malicious attachment
+
+to one of the
+employees via email.
+
+Once they click on
+it on their computer
+
+within the internal network,
+they execute, or run, the macro
+
+maybe within a Word
+file or an Excel file.
+
+Then that could provide us with
+access to their target system
+
+and consequently,
+the internal network.
+
+So from this point, or
+from this perspective,
+
+you can start to see why
+information gathering is
+
+so important.
+
+And that's why we always have
+the saying as penetration
+
+testers, the more you
+know about your target,
+
+the more successful you will
+be during the latter stages
+
+of your penetration test.
+
+Because all of this
+information adds up.
+
+And if you know more
+about the target
+
+that you're trying
+to exploit or you're
+
+trying to perform a
+penetration test on,
+
+then the easier it will be.
+
+Whereas, if you
+didn't know anything
+
+or didn't know much
+about your target,
+
+then you may be
+wondering, well, I really
+
+don't know how to gain
+access to this company
+
+or to this company's
+digital infrastructure.
+
+So always remember that
+information gathering
+
+is the first phase of
+a penetration test.
+
+And it's arguably the
+most important phase.
+
+Because all of the other
+phases of a penetration test,
+
+like enumeration, exploitation,
+post exploitation,
+
+et cetera all depend on the
+information that you gather
+
+or that you obtain
+within this phase.
+
+Now, information
+gathering is typically
+
+broken down into two
+phases or into two types.
+
+You have passive
+information gathering.
+
+And you have active
+information gathering.
+
+Passive information
+gathering involves
+
+gathering as much information
+as possible without actively
+
+engaging with the target.
+
+So let's go back to the
+example of performing a pen
+
+test on a website.
+
+When performing passive
+information gathering,
+
+we're essentially
+utilizing publicly
+
+available or accessible
+information, or resources,
+
+to learn more about
+that particular website.
+
+So this would typically
+involve analyzing
+
+the website from an
+end user's perspective
+
+through your browser, learning
+more about the web technologies
+
+on that site, the IP address
+of the actual web server that's
+
+being used to host this
+particular website,
+
+stuff like that.
+
+And we then have active
+information gathering,
+
+which essentially
+involves gathering
+
+as much information as
+possible by actively engaging
+
+with the target system.
+
+So again, let's go back to
+the example of the website.
+
+Let's say from the passive
+information gathering
+
+phase we identified the IP
+address of the web server
+
+that's hosting that website.
+
+Well, now in active
+information gathering,
+
+or within the active
+information gathering phase,
+
+we can start
+performing a port scan
+
+on that IP address
+with Nmap to identify
+
+the open ports and the
+respective services that are
+
+running on those open ports.
+
+And we can then use
+that information
+
+to identify vulnerabilities
+that can be exploited
+
+that can consequently provide us
+with access to that web server.
+
+So you can start to
+see the difference.
+
+With passive, we are
+not engaging actively
+
+with the target system.
+
+We're using what's available
+on the internet anyway
+
+or what's publicly available.
+
+With active, we're now
+really shaking the hand
+
+of whatever we're targeting.
+
+And we're making
+ourselves known.
+
+So these two need
+to be understood
+
+within their own
+respective domains.
+
+Now, one important thing to
+note about active information
+
+gathering is that
+because you're actively
+
+engaging with the target
+system, that means
+
+you're communicating with it.
+
+You're interacting with it.
+
+You're making it work
+in a different way.
+
+You will require
+authorization from the company
+
+that you're performing
+the penetration
+
+test for in order to perform
+active information gathering.
+
+What does this mean?
+
+It means do not target any
+systems that you do not
+
+have permission to
+target and do not
+
+perform an Nmap scan on them.
+
+Do not do anything that
+might be considered active.
+
+So again, that's just something
+that I want to point out.
+
+I had mentioned it in the
+previous video as a disclaimer.
+
+Be very careful with this.
+
+Because if you target a
+system that you do not
+
+have the permission
+to target, you
+
+could potentially go to jail.
+
+So do keep that in mind.
+
+That's very, very
+important and is actually
+
+a huge part of the code of
+ethics of a penetration tester.
+
+Don't do anything that might
+lead to you being prosecuted.
+
+So just be aware of that.
+
+Now, when it comes down
+to information gathering,
+
+or reconnaissance,
+what are we looking
+
+for in both cases, in the
+case of passive information
+
+gathering and active
+information gathering?
+
+Now, I just want to make
+something clear that this list
+
+is not comprehensive.
+
+There's a ton of information
+you can gather in each phase
+
+or in each form of
+information gathering.
+
+This is just really the
+most important information.
+
+So you want to identify the
+IP addresses of the targets
+
+and of course, DNS information.
+
+You want to identify domain
+names and domain ownership
+
+information, identify email
+addresses and social media
+
+profiles, identify the
+web technologies being
+
+used on target sites,
+identify subdomains,
+
+et cetera, et cetera.
+
+And within active
+information gathering,
+
+that of course, as I said,
+involves discovering open ports
+
+on target systems,
+learning about
+
+the internal infrastructure of a
+target network or organization,
+
+and of course enumerating
+information from target
+
+systems.
+
+Now, in this course,
+we will not be
+
+covering the enumeration
+aspect of active information
+
+gathering.
+
+That is going to be covered
+within its own course.
+
+Because enumeration is
+quite an extensive topic.
+
+So I just wanted
+to point that out.
+
+All right, so now that we have
+an idea as to what information
+
+gathering is and the two types
+of information gathering,
+
+or reconnaissance,
+that we have, we
+
+can actually get started
+with the first section
+
+of this course, which is going
+to cover passive information
+
+gathering.
+
+So I'll be seeing you
+in the next video.
+
+
+

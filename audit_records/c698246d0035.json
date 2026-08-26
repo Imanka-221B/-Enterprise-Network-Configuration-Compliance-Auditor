@@ -1,0 +1,664 @@
+{
+  "audit_id": "c698246d0035",
+  "filename": "1._Introduction_To_Information_Gathering.txt",
+  "data": {
+    "hostname": null,
+    "global_security": {
+      "aaa_new_model": false,
+      "enable_secret_present": false,
+      "username_count": 0,
+      "users": [],
+      "login_block_for": null,
+      "ssh_configured": false,
+      "ssh_version": null,
+      "ssh_auth_retries": null,
+      "ssh_timeout": null,
+      "http_server": false,
+      "https_server": false,
+      "snmp_communities": [],
+      "snmp_v3_users": [],
+      "snmp_configured": false,
+      "snmp_version": null,
+      "insecure_snmp_community": false,
+      "syslog_servers": [],
+      "logging_configured": false,
+      "ntp_servers": [],
+      "ntp_configured": false,
+      "dhcp_snooping_enabled": false,
+      "dhcp_snooping_vlans": null,
+      "arp_inspection_vlans": null,
+      "ip_routing": false,
+      "default_gateway": null,
+      "management_svis": []
+    },
+    "vty_lines": [],
+    "interfaces": [],
+    "vlans": [],
+    "ssh": {
+      "enabled": false,
+      "version": null
+    },
+    "telnet": {
+      "enabled": false
+    },
+    "aaa": {
+      "enabled": false
+    },
+    "snmp": {
+      "configured": false,
+      "version": null,
+      "insecure_community": false
+    },
+    "logging": {
+      "configured": false,
+      "syslog_servers": []
+    },
+    "ntp": {
+      "configured": false,
+      "servers": []
+    }
+  },
+  "findings": [
+    {
+      "rule_id": "SSH-001",
+      "category": "SSH",
+      "title": "SSH configured",
+      "target": "Global",
+      "status": "FAIL",
+      "severity": "High",
+      "evidence": "SSH configured = False",
+      "expected": "SSH configuration is present.",
+      "recommendation": "Configure SSH for secure remote administration.",
+      "remediation": "ip ssh version 2",
+      "reference": "Project Secure Management Baseline",
+      "applicability": "Device-wide control."
+    },
+    {
+      "rule_id": "SSH-002",
+      "category": "SSH",
+      "title": "SSH Version 2",
+      "target": "Global",
+      "status": "FAIL",
+      "severity": "High",
+      "evidence": "SSH version = None",
+      "expected": "ip ssh version 2",
+      "recommendation": "Configure SSH Version 2.",
+      "remediation": "ip ssh version 2",
+      "reference": "Project Secure Management Baseline",
+      "applicability": "Device-wide control."
+    },
+    {
+      "rule_id": "SSH-003",
+      "category": "SSH",
+      "title": "SSH authentication retries limited",
+      "target": "Global",
+      "status": "FAIL",
+      "severity": "Medium",
+      "evidence": "SSH authentication retries = None",
+      "expected": "SSH authentication retries are explicitly limited.",
+      "recommendation": "Limit SSH authentication retries.",
+      "remediation": "ip ssh authentication-retries 3",
+      "reference": "Project Secure Management Baseline",
+      "applicability": "Device-wide control."
+    },
+    {
+      "rule_id": "SSH-004",
+      "category": "SSH",
+      "title": "SSH idle timeout configured",
+      "target": "Global",
+      "status": "FAIL",
+      "severity": "Medium",
+      "evidence": "SSH timeout = None",
+      "expected": "SSH idle timeout is explicitly configured.",
+      "recommendation": "Configure an SSH idle timeout.",
+      "remediation": "ip ssh time-out 60",
+      "reference": "Project Secure Management Baseline",
+      "applicability": "Device-wide control."
+    },
+    {
+      "rule_id": "TEL-001",
+      "category": "Remote Access",
+      "title": "Telnet disabled",
+      "target": "Global",
+      "status": "PASS",
+      "severity": "-",
+      "evidence": "Telnet allowed = False",
+      "expected": "VTY transport input is SSH only.",
+      "recommendation": "No action required.",
+      "remediation": "",
+      "reference": "Project Secure Management Baseline",
+      "applicability": "Device-wide control."
+    },
+    {
+      "rule_id": "AAA-001",
+      "category": "AAA",
+      "title": "AAA enabled",
+      "target": "Global",
+      "status": "FAIL",
+      "severity": "High",
+      "evidence": "aaa new-model = False",
+      "expected": "aaa new-model",
+      "recommendation": "Enable AAA and configure the approved authentication method.",
+      "remediation": "aaa new-model",
+      "reference": "Project Secure Management Baseline",
+      "applicability": "Device-wide control."
+    },
+    {
+      "rule_id": "AAA-002",
+      "category": "AAA",
+      "title": "Privileged local administrator exists",
+      "target": "Global",
+      "status": "FAIL",
+      "severity": "High",
+      "evidence": "Local users = []",
+      "expected": "At least one local user has privilege 15.",
+      "recommendation": "Create an approved privileged local administrator account.",
+      "remediation": "username <admin> privilege 15 secret <secret>",
+      "reference": "Project Secure Management Baseline",
+      "applicability": "Device-wide control."
+    },
+    {
+      "rule_id": "PWD-001",
+      "category": "Password Security",
+      "title": "Enable secret configured",
+      "target": "Global",
+      "status": "FAIL",
+      "severity": "High",
+      "evidence": "enable secret present = False",
+      "expected": "enable secret is present.",
+      "recommendation": "Configure an approved enable secret.",
+      "remediation": "enable secret <secret>",
+      "reference": "Project Secure Management Baseline",
+      "applicability": "Device-wide control."
+    },
+    {
+      "rule_id": "MGMT-001",
+      "category": "Management Access",
+      "title": "VTY management ACL",
+      "target": "Global",
+      "status": "FAIL",
+      "severity": "High",
+      "evidence": "VTY access classes = []",
+      "expected": "Every VTY block has an access-class.",
+      "recommendation": "Restrict VTY access with an approved management ACL.",
+      "remediation": "line vty 0 15 ; access-class <MGMT-ACL> in",
+      "reference": "Project Secure Management Baseline",
+      "applicability": "Device-wide control."
+    },
+    {
+      "rule_id": "MGMT-002",
+      "category": "Management Access",
+      "title": "HTTP management disabled",
+      "target": "Global",
+      "status": "PASS",
+      "severity": "-",
+      "evidence": "HTTP server enabled = False",
+      "expected": "ip http server is disabled.",
+      "recommendation": "No action required.",
+      "remediation": "",
+      "reference": "Project Secure Management Baseline",
+      "applicability": "Device-wide control."
+    },
+    {
+      "rule_id": "MGMT-003",
+      "category": "Management Interface",
+      "title": "Management SVI has an IP address",
+      "target": "Global",
+      "status": "FAIL",
+      "severity": "Medium",
+      "evidence": "Management SVIs = []",
+      "expected": "An active management SVI has an IP address.",
+      "recommendation": "Configure the approved management SVI address.",
+      "remediation": "interface Vlan<MGMT> ; ip address <ip> <mask>",
+      "reference": "Project Management Baseline",
+      "applicability": "Device-wide control."
+    },
+    {
+      "rule_id": "SNMP-001",
+      "category": "SNMP",
+      "title": "Secure SNMP version",
+      "target": "Global",
+      "status": "PASS",
+      "severity": "-",
+      "evidence": "SNMP configured = False; version = None",
+      "expected": "SNMP is absent or configured as v3.",
+      "recommendation": "No action required.",
+      "remediation": "",
+      "reference": "Project Monitoring Baseline",
+      "applicability": "Device-wide control."
+    },
+    {
+      "rule_id": "SNMP-002",
+      "category": "SNMP",
+      "title": "No default SNMP community",
+      "target": "Global",
+      "status": "PASS",
+      "severity": "-",
+      "evidence": "Insecure community detected = False",
+      "expected": "No public/private community.",
+      "recommendation": "No action required.",
+      "remediation": "",
+      "reference": "Project Monitoring Baseline",
+      "applicability": "Device-wide control."
+    },
+    {
+      "rule_id": "LOG-001",
+      "category": "Logging",
+      "title": "Remote logging configured",
+      "target": "Global",
+      "status": "FAIL",
+      "severity": "Medium",
+      "evidence": "Logging servers = []",
+      "expected": "At least one remote logging destination.",
+      "recommendation": "Configure an approved centralized syslog server.",
+      "remediation": "logging host <syslog-ip>",
+      "reference": "Project Monitoring Baseline",
+      "applicability": "Device-wide control."
+    },
+    {
+      "rule_id": "NTP-001",
+      "category": "NTP",
+      "title": "NTP server configured",
+      "target": "Global",
+      "status": "FAIL",
+      "severity": "Medium",
+      "evidence": "NTP servers = []",
+      "expected": "At least one NTP server.",
+      "recommendation": "Configure an approved NTP server.",
+      "remediation": "ntp server <ntp-ip>",
+      "reference": "Project Monitoring Baseline",
+      "applicability": "Device-wide control."
+    },
+    {
+      "rule_id": "DHCP-001",
+      "category": "DHCP Snooping",
+      "title": "DHCP Snooping enabled",
+      "target": "Global",
+      "status": "FAIL",
+      "severity": "Medium",
+      "evidence": "enabled = False; VLANs = None",
+      "expected": "DHCP Snooping enabled with VLAN scope.",
+      "recommendation": "Enable DHCP Snooping on protected VLANs.",
+      "remediation": "ip dhcp snooping ; ip dhcp snooping vlan <vlan-list>",
+      "reference": "Project Layer-2 Security Baseline",
+      "applicability": "Device-wide control."
+    },
+    {
+      "rule_id": "DAI-001",
+      "category": "Dynamic ARP Inspection",
+      "title": "DAI enabled for protected VLANs",
+      "target": "Global",
+      "status": "FAIL",
+      "severity": "Medium",
+      "evidence": "DAI VLANs = None",
+      "expected": "DAI VLAN scope configured.",
+      "recommendation": "Enable Dynamic ARP Inspection on applicable VLANs.",
+      "remediation": "ip arp inspection vlan <vlan-list>",
+      "reference": "Project Layer-2 Security Baseline",
+      "applicability": "Device-wide control."
+    }
+  ],
+  "summary": {
+    "total": 17,
+    "evaluated": 17,
+    "passed": 4,
+    "failed": 13,
+    "not_applicable": 0,
+    "compliance_score": 23.53,
+    "severity_counts": {
+      "Critical": 0,
+      "High": 6,
+      "Medium": 7,
+      "Low": 0
+    },
+    "category_counts": {
+      "SSH": {
+        "passed": 0,
+        "failed": 4,
+        "not_applicable": 0
+      },
+      "Remote Access": {
+        "passed": 1,
+        "failed": 0,
+        "not_applicable": 0
+      },
+      "AAA": {
+        "passed": 0,
+        "failed": 2,
+        "not_applicable": 0
+      },
+      "Password Security": {
+        "passed": 0,
+        "failed": 1,
+        "not_applicable": 0
+      },
+      "Management Access": {
+        "passed": 1,
+        "failed": 1,
+        "not_applicable": 0
+      },
+      "Management Interface": {
+        "passed": 0,
+        "failed": 1,
+        "not_applicable": 0
+      },
+      "SNMP": {
+        "passed": 2,
+        "failed": 0,
+        "not_applicable": 0
+      },
+      "Logging": {
+        "passed": 0,
+        "failed": 1,
+        "not_applicable": 0
+      },
+      "NTP": {
+        "passed": 0,
+        "failed": 1,
+        "not_applicable": 0
+      },
+      "DHCP Snooping": {
+        "passed": 0,
+        "failed": 1,
+        "not_applicable": 0
+      },
+      "Dynamic ARP Inspection": {
+        "passed": 0,
+        "failed": 1,
+        "not_applicable": 0
+      }
+    }
+  },
+  "risk": {
+    "engine": "Risk Assessment Engine",
+    "version": "1.0",
+    "summary": {
+      "applicable_weight": 43,
+      "failed_weight": 32,
+      "risk_percentage": 74.42,
+      "security_score": 25.58,
+      "risk_level": "Critical",
+      "failed_count": 13,
+      "severity_counts": {
+        "Critical": 0,
+        "High": 6,
+        "Medium": 7,
+        "Low": 0
+      }
+    },
+    "prioritized_findings": [
+      {
+        "rule_id": "AAA-001",
+        "category": "AAA",
+        "check": "AAA enabled",
+        "target": "Global",
+        "severity": "High",
+        "weight": 3,
+        "evidence": "aaa new-model = False",
+        "recommendation": "Enable AAA and configure the approved authentication method.",
+        "remediation": "aaa new-model",
+        "reference": "Project Secure Management Baseline",
+        "risk_contribution": 6.98
+      },
+      {
+        "rule_id": "AAA-002",
+        "category": "AAA",
+        "check": "Privileged local administrator exists",
+        "target": "Global",
+        "severity": "High",
+        "weight": 3,
+        "evidence": "Local users = []",
+        "recommendation": "Create an approved privileged local administrator account.",
+        "remediation": "username <admin> privilege 15 secret <secret>",
+        "reference": "Project Secure Management Baseline",
+        "risk_contribution": 6.98
+      },
+      {
+        "rule_id": "MGMT-001",
+        "category": "Management Access",
+        "check": "VTY management ACL",
+        "target": "Global",
+        "severity": "High",
+        "weight": 3,
+        "evidence": "VTY access classes = []",
+        "recommendation": "Restrict VTY access with an approved management ACL.",
+        "remediation": "line vty 0 15 ; access-class <MGMT-ACL> in",
+        "reference": "Project Secure Management Baseline",
+        "risk_contribution": 6.98
+      },
+      {
+        "rule_id": "PWD-001",
+        "category": "Password Security",
+        "check": "Enable secret configured",
+        "target": "Global",
+        "severity": "High",
+        "weight": 3,
+        "evidence": "enable secret present = False",
+        "recommendation": "Configure an approved enable secret.",
+        "remediation": "enable secret <secret>",
+        "reference": "Project Secure Management Baseline",
+        "risk_contribution": 6.98
+      },
+      {
+        "rule_id": "SSH-001",
+        "category": "SSH",
+        "check": "SSH configured",
+        "target": "Global",
+        "severity": "High",
+        "weight": 3,
+        "evidence": "SSH configured = False",
+        "recommendation": "Configure SSH for secure remote administration.",
+        "remediation": "ip ssh version 2",
+        "reference": "Project Secure Management Baseline",
+        "risk_contribution": 6.98
+      },
+      {
+        "rule_id": "SSH-002",
+        "category": "SSH",
+        "check": "SSH Version 2",
+        "target": "Global",
+        "severity": "High",
+        "weight": 3,
+        "evidence": "SSH version = None",
+        "recommendation": "Configure SSH Version 2.",
+        "remediation": "ip ssh version 2",
+        "reference": "Project Secure Management Baseline",
+        "risk_contribution": 6.98
+      },
+      {
+        "rule_id": "DAI-001",
+        "category": "Dynamic ARP Inspection",
+        "check": "DAI enabled for protected VLANs",
+        "target": "Global",
+        "severity": "Medium",
+        "weight": 2,
+        "evidence": "DAI VLANs = None",
+        "recommendation": "Enable Dynamic ARP Inspection on applicable VLANs.",
+        "remediation": "ip arp inspection vlan <vlan-list>",
+        "reference": "Project Layer-2 Security Baseline",
+        "risk_contribution": 4.65
+      },
+      {
+        "rule_id": "DHCP-001",
+        "category": "DHCP Snooping",
+        "check": "DHCP Snooping enabled",
+        "target": "Global",
+        "severity": "Medium",
+        "weight": 2,
+        "evidence": "enabled = False; VLANs = None",
+        "recommendation": "Enable DHCP Snooping on protected VLANs.",
+        "remediation": "ip dhcp snooping ; ip dhcp snooping vlan <vlan-list>",
+        "reference": "Project Layer-2 Security Baseline",
+        "risk_contribution": 4.65
+      },
+      {
+        "rule_id": "LOG-001",
+        "category": "Logging",
+        "check": "Remote logging configured",
+        "target": "Global",
+        "severity": "Medium",
+        "weight": 2,
+        "evidence": "Logging servers = []",
+        "recommendation": "Configure an approved centralized syslog server.",
+        "remediation": "logging host <syslog-ip>",
+        "reference": "Project Monitoring Baseline",
+        "risk_contribution": 4.65
+      },
+      {
+        "rule_id": "MGMT-003",
+        "category": "Management Interface",
+        "check": "Management SVI has an IP address",
+        "target": "Global",
+        "severity": "Medium",
+        "weight": 2,
+        "evidence": "Management SVIs = []",
+        "recommendation": "Configure the approved management SVI address.",
+        "remediation": "interface Vlan<MGMT> ; ip address <ip> <mask>",
+        "reference": "Project Management Baseline",
+        "risk_contribution": 4.65
+      },
+      {
+        "rule_id": "NTP-001",
+        "category": "NTP",
+        "check": "NTP server configured",
+        "target": "Global",
+        "severity": "Medium",
+        "weight": 2,
+        "evidence": "NTP servers = []",
+        "recommendation": "Configure an approved NTP server.",
+        "remediation": "ntp server <ntp-ip>",
+        "reference": "Project Monitoring Baseline",
+        "risk_contribution": 4.65
+      },
+      {
+        "rule_id": "SSH-003",
+        "category": "SSH",
+        "check": "SSH authentication retries limited",
+        "target": "Global",
+        "severity": "Medium",
+        "weight": 2,
+        "evidence": "SSH authentication retries = None",
+        "recommendation": "Limit SSH authentication retries.",
+        "remediation": "ip ssh authentication-retries 3",
+        "reference": "Project Secure Management Baseline",
+        "risk_contribution": 4.65
+      },
+      {
+        "rule_id": "SSH-004",
+        "category": "SSH",
+        "check": "SSH idle timeout configured",
+        "target": "Global",
+        "severity": "Medium",
+        "weight": 2,
+        "evidence": "SSH timeout = None",
+        "recommendation": "Configure an SSH idle timeout.",
+        "remediation": "ip ssh time-out 60",
+        "reference": "Project Secure Management Baseline",
+        "risk_contribution": 4.65
+      }
+    ],
+    "scoring_model": {
+      "severity_weights": {
+        "Critical": 4,
+        "High": 3,
+        "Medium": 2,
+        "Low": 1
+      },
+      "risk_formula": "Failed Severity Weight / Applicable Severity Weight \u00d7 100",
+      "security_score_formula": "100 - Risk Percentage",
+      "thresholds": {
+        "Low": "0-10%",
+        "Medium": ">10-25%",
+        "High": ">25-50%",
+        "Critical": ">50-100%"
+      }
+    }
+  },
+  "category_risk": {
+    "SSH": {
+      "weight": 10,
+      "count": 4,
+      "severity": "High",
+      "contribution": 31.25
+    },
+    "AAA": {
+      "weight": 6,
+      "count": 2,
+      "severity": "High",
+      "contribution": 18.75
+    },
+    "Management Access": {
+      "weight": 3,
+      "count": 1,
+      "severity": "High",
+      "contribution": 9.38
+    },
+    "Password Security": {
+      "weight": 3,
+      "count": 1,
+      "severity": "High",
+      "contribution": 9.38
+    },
+    "DHCP Snooping": {
+      "weight": 2,
+      "count": 1,
+      "severity": "Medium",
+      "contribution": 6.25
+    },
+    "Dynamic ARP Inspection": {
+      "weight": 2,
+      "count": 1,
+      "severity": "Medium",
+      "contribution": 6.25
+    },
+    "Logging": {
+      "weight": 2,
+      "count": 1,
+      "severity": "Medium",
+      "contribution": 6.25
+    },
+    "Management Interface": {
+      "weight": 2,
+      "count": 1,
+      "severity": "Medium",
+      "contribution": 6.25
+    },
+    "NTP": {
+      "weight": 2,
+      "count": 1,
+      "severity": "Medium",
+      "contribution": 6.25
+    }
+  },
+  "statistics": {
+    "compliance": {
+      "passed": 4,
+      "failed": 13,
+      "not_applicable": 0,
+      "applicable": 17,
+      "score": 23.53
+    },
+    "risk": {
+      "critical": 0,
+      "high": 6,
+      "medium": 7,
+      "low": 0,
+      "percentage": 74.42,
+      "level": "Critical"
+    },
+    "interfaces": {
+      "total": 0,
+      "access": 0,
+      "trunk": 0,
+      "unused": 0,
+      "other": 0
+    }
+  },
+  "audit_time": "25 Aug 2026, 05:45",
+  "user_id": 1,
+  "username": "Test_02",
+  "performed_by": {
+    "user_id": 1,
+    "username": "Test_02"
+  }
+}

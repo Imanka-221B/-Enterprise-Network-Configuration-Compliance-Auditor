@@ -156,7 +156,7 @@ This installs Flask and ReportLab required by the PDF download feature.
 
 ## Authentication & Security
 
-ENCCA protects all audit, history and report routes with server-side Flask session authentication. Uploaded Cisco configurations and their derived findings are accessible only after sign-in.
+ENCCA protects all audit, history and report routes with a SQLite-backed server-side session service. The Flask cookie contains only a signed random session identifier; identities, permissions, CSRF state and timeout metadata remain in SQLite. Uploaded Cisco configurations and their derived findings are accessible only after sign-in.
 
 ### Roles
 
@@ -192,13 +192,13 @@ Use `.env.example` only as a placeholder guide; do not commit a real `.env` file
 
 ### Session and request security
 
-Sessions are HTTP-only, `SameSite=Lax`, expire after one hour, and use secure cookies automatically on Vercel/HTTPS. Every state-changing form (login, upload and user management) carries a cryptographically random CSRF token. Login return URLs are restricted to local ENCCA paths.
+Sessions use HTTP-only, `SameSite=Lax` cookies, `Path=/`, and secure cookies automatically on Vercel/HTTPS. The default idle timeout is 30 minutes, the absolute timeout is 8 hours, and each user may have 3 active sessions; a fourth login revokes the oldest active session. These values are configurable with `ENCCA_SESSION_IDLE_TIMEOUT_MINUTES`, `ENCCA_SESSION_ABSOLUTE_TIMEOUT_HOURS`, and `ENCCA_MAX_CONCURRENT_SESSIONS`. Every state-changing form (login, upload and user management) carries a cryptographically random CSRF token whose hash is stored server-side. Login return URLs are restricted to local ENCCA paths. Logout, user deactivation and password reset revoke server-side sessions.
 
 ### Vercel
 
-Set all four environment variables above in **Vercel Project Settings → Environment Variables** for Production, Preview and Development as appropriate. `FLASK_SECRET_KEY` should always be configured for production so sessions remain valid when Vercel starts another function instance. If it is omitted, ENCCA generates a temporary per-instance key and logs a warning; the deployment remains available, but existing sessions will not survive instance changes.
+Set the secret and administrator environment variables above in **Vercel Project Settings → Environment Variables** for Production, Preview and Development as appropriate. Also configure the three session policy variables when changing their defaults. `FLASK_SECRET_KEY` should always be configured for production so the identifier cookie can be verified when Vercel starts another function instance. If it is omitted, ENCCA generates a temporary per-instance key and logs a warning; existing cookies will not survive instance changes.
 
-Vercel Functions use temporary filesystem storage. Consequently, the JSON audit records, generated PDFs and the SQLite authentication database are ephemeral and can disappear when a function instance is recycled. The bootstrap variables recreate only the initial administrator; independently created users and audit history need durable storage for a production multi-instance deployment. This project intentionally does not add an external cloud database/API.
+Vercel Functions use temporary filesystem storage. Consequently, the SQLite authentication database, including `user_sessions`, is ephemeral and can disappear when a function instance is recycled; it is not a persistent enterprise session store for a multi-instance production deployment. The server-side design is fully functional for local development and a single durable runtime, but reliable production persistence requires a durable database integration, which this project intentionally does not add. The JSON audit records and generated PDFs have the same limitation. Bootstrap variables recreate only the initial administrator.
 
 ### Tests
 

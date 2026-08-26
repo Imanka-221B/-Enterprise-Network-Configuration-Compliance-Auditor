@@ -1,0 +1,1207 @@
+    1 |
+    2 |Building configuration...
+    3 |
+    4 |Current configuration : 41480 bytes
+    5 |!
+    6 |! Last configuration change at 09:06:15 IST Mon May 18 2026
+    7 |!
+    8 |version 17.12
+    9 |service tcp-keepalives-in
+   10 |service tcp-keepalives-out
+   11 |service timestamps debug datetime
+   12 |service timestamps log datetime msec
+   13 |service password-encryption
+   14 |no service dhcp
+   15 |platform punt-keepalive disable-kernel-core
+   16 |!
+   17 |hostname 124-1ST-SWT-001
+   18 |!
+   19 |!
+   20 |vrf definition Mgmt-vrf
+   21 | !
+   22 | address-family ipv4
+   23 | exit-address-family
+   24 | !
+   25 | address-family ipv6
+   26 | exit-address-family
+   27 |!
+   28 |aaa new-model
+   29 |!
+   30 |!
+   31 |aaa group server radius ISE-HA
+   32 | server name ISE1
+   33 | server name ISE2
+   34 |!
+   35 |aaa group server tacacs+ ISE-DA-HA
+   36 | server name ISE1
+   37 | server name ISE2
+   38 |!
+   39 |aaa authentication login default group ISE-DA-HA local
+   40 |aaa authentication enable default group ISE-DA-HA enable
+   41 |aaa authentication dot1x default group ISE-HA
+   42 |aaa authorization exec default group ISE-DA-HA local 
+   43 |aaa authorization network default group ISE-HA 
+   44 |aaa accounting exec default start-stop group ISE-DA-HA group ISE-DA-HA
+   45 |aaa accounting commands 15 default start-stop group ISE-DA-HA
+   46 |!
+   47 |!
+   48 |aaa session-id common
+   49 |!
+   50 |!
+   51 |!
+   52 |clock timezone IST 5 30
+   53 |switch 1 provision c9200l-24p-4g
+   54 |!
+   55 |!
+   56 |!
+   57 |!
+   58 |!
+   59 |ip name-server 10.18.40.34 10.18.40.33
+   60 |ip domain lookup source-interface Vlan10
+   61 |ip domain name dfcc.net
+   62 |!
+   63 |!
+   64 |!
+   65 |ip dhcp snooping vlan 10,20,30,40,50
+   66 | login xxxxxx
+   67 | login xxxxxx
+   68 |vtp mode transparent
+   69 |vtp version 1
+   70 |!
+   71 |!
+   72 |!
+   73 |!
+   74 |!
+   75 |!
+   76 |crytpo pki xxxxxxx
+   77 | enrollment pkcs12
+   78 | revocation-check crl
+   79 | hash sha256
+   80 |!
+   81 |crytpo pki xxxxxxx
+   82 | enrollment selfsigned
+   83 | subject-name xxxxxxxx
+   84 | revocation-check none
+   85 | rsakeypair TP-self-signed- xxxxxxxx
+   86 | hash sha256
+   87 |!
+   88 |crytpo pki xxxxxxx
+   89 | enrollment mode ra
+   90 | enrollment terminal
+   91 | usage ssl-client
+   92 | revocation-check none
+   93 | source interface Vlan10
+   94 | hash sha256
+   95 |!
+   96 |crytpo pki xxxxxxx
+   97 | enrollment url http://10.18.57.50:80/ejbca/publicweb/apply/scep/sdnscep
+   98 | fqdn 124-1ST-SWT-001.dfcc.net
+   99 | subject-name xxxxxxxx
+  100 | subject-alt-name 124-1ST-SWT-001.dfcc.net
+  101 | revocation-check crl
+  102 | source interface Vlan10
+  103 | rsakeypair xxxxxxxx
+  104 | auto-enroll 80 regenerate
+  105 | hash sha256
+  106 |!
+  107 |!
+  108 |crypto pki certificate chain xxxxxxx
+  109 | certificate ca xxxxxxxx
+  110 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  111 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  112 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  113 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  114 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  115 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  116 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  117 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  118 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  119 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  120 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  121 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  122 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  123 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  124 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  125 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  126 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  127 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  128 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  129 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  130 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  131 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  132 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  133 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  134 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  135 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  136 |quit
+  137 |crypto pki certificate chain xxxxxxx
+  138 | certificate self-signed xxxxxxxx
+  139 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  140 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  141 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  142 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  143 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  144 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  145 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  146 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  147 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  148 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  149 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  150 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  151 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  152 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  153 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  154 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  155 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  156 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  157 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  158 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  159 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  160 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  161 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  162 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  163 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  164 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  165 |quit
+  166 |crypto pki certificate chain xxxxxxx
+  167 | certificate ca xxxxxxxx
+  168 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  169 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  170 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  171 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  172 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  173 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  174 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  175 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  176 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  177 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  178 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  179 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  180 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  181 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  182 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  183 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  184 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  185 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  186 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  187 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  188 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  189 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  190 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  191 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  192 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  193 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  194 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  195 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  196 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  197 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  198 |quit
+  199 |crypto pki certificate chain xxxxxxx
+  200 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  201 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  202 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  203 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  204 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  205 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  206 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  207 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  208 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  209 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  210 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  211 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  212 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  213 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  214 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  215 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  216 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  217 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  218 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  219 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  220 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  221 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  222 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  223 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  224 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  225 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  226 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  227 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  228 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  229 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  230 |quit
+  231 | certificate ca xxxxxxxx
+  232 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  233 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  234 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  235 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  236 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  237 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  238 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  239 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  240 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  241 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  242 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  243 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  244 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  245 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  246 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  247 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  248 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  249 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  250 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  251 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  252 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  253 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  254 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  255 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  256 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  257 |  xxxx  xxxxx  xxxx  xxxx  xxxx
+  258 |quit
+  259 |!
+  260 |license boot level network-essentials addon dna-essentials
+  261 |dot1x system-auth-control
+  262 |memory free low-watermark processor 8237
+  263 |!
+  264 |diagnostic bootup level minimal
+  265 |!
+  266 |spanning-tree mode rapid-pvst
+  267 |spanning-tree extend system-id
+  268 |spanning-tree vlan 10,20,30,40,50 priority 16384
+  269 |!
+  270 |!
+  271 |!
+  272 |enable secret 9 xxxxxxxx
+  273 |!
+  274 |username cisco privilege 15 secret xxxxxx 
+  275 |username netmgr secret 9 xxxxxxxx
+  276 |username ncinga secret 9 xxxxxxxx
+  277 |!
+  278 |redundancy
+  279 | mode sso
+  280 |crypto engine compliance shield disable
+  281 |!
+  282 |!
+  283 |!
+  284 |!
+  285 |!
+  286 |transceiver type all
+  287 | monitoring
+  288 |!
+  289 |vlan 10
+  290 | name INFRA
+  291 |!
+  292 |vlan 20
+  293 | name MGR-PC
+  294 |!
+  295 |vlan 30
+  296 | name USER-PC
+  297 |!
+  298 |vlan 40
+  299 | name Cisco-Voice
+  300 |!
+  301 |vlan 50
+  302 | name ATM
+  303 |!
+  304 |vlan 60
+  305 | name CCTV_SLT
+  306 |!
+  307 |!
+  308 |class-map match-any system-cpp-police-ewlc-control
+  309 |  description EWLC Control 
+  310 |class-map match-any system-cpp-police-topology-control
+  311 |  description Topology control
+  312 |class-map match-any system-cpp-police-sw-forward
+  313 |  description Sw forwarding, L2 LVX data packets, LOGGING, Transit Traffic
+  314 |class-map match-any system-cpp-default
+  315 |  description EWLC data, Inter FED Traffic 
+  316 |class-map match-any system-cpp-police-sys-data
+  317 |  description Openflow, Exception, EGR Exception, NFL Sampled Data, RPF Failed
+  318 |class-map match-any system-cpp-police-punt-webauth
+  319 |  description Punt Webauth
+  320 |class-map match-any system-cpp-police-l2lvx-control
+  321 |  description L2 LVX control packets
+  322 |class-map match-any system-cpp-police-forus
+  323 |  description Forus Address resolution and Forus traffic
+  324 |class-map match-any system-cpp-police-multicast-end-station
+  325 |  description MCAST END STATION
+  326 |class-map match-any system-cpp-police-high-rate-app
+  327 |  description High Rate Applications 
+  328 |class-map match-any system-cpp-police-multicast
+  329 |  description MCAST Data
+  330 |class-map match-any system-cpp-police-l2-control
+  331 |  description L2 control
+  332 |class-map match-any system-cpp-police-dot1x-auth
+  333 |  description DOT1X Auth
+  334 |class-map match-any system-cpp-police-data
+  335 |  description ICMP redirect, ICMP_GEN and BROADCAST
+  336 |class-map match-any system-cpp-police-stackwise-virt-control
+  337 |  description Stackwise Virtual OOB
+  338 |class-map match-any non-client-nrt-class
+  339 |class-map match-any system-cpp-police-routing-control
+  340 |  description Routing control and Low Latency
+  341 |class-map match-any system-cpp-police-protocol-snooping
+  342 |  description Protocol snooping
+  343 |class-map match-any system-cpp-police-dhcp-snooping
+  344 |  description DHCP snooping
+  345 |class-map match-any system-cpp-police-ios-routing
+  346 |  description L2 control, Topology control, Routing control, Low Latency
+  347 |class-map match-any system-cpp-police-system-critical
+  348 |  description System Critical and Gold Pkt
+  349 |class-map match-any system-cpp-police-ios-feature
+  350 |  description ICMPGEN,BROADCAST,ICMP,L2LVXCntrl,ProtoSnoop,PuntWebauth,MCASTData,Transit,DOT1XAuth,Swfwd,LOGGING,L2LVXData,ForusTraffic,ForusARP,McastEndStn,Openflow,Exception,EGRExcption,NflSampled,RpfFailed
+  351 |!
+  352 |policy-map system-cpp-policy
+  353 |!
+  354 |! 
+  355 |!
+  356 |!
+  357 |!
+  358 |!
+  359 |!
+  360 |!
+  361 |!
+  362 |!
+  363 |!
+  364 |interface GigabitEthernet0/0
+  365 | vrf forwarding Mgmt-vrf
+  366 | no ip address
+  367 | shutdown
+  368 |!
+  369 |interface GigabitEthernet1/0/1
+  370 | description ### USER/IP-Phone ###
+  371 | switchport access vlan 30
+  372 | switchport mode access
+  373 | switchport voice vlan 40
+  374 | ip access-group PRE_AUTH_ACL in
+  375 | authentication host-mode multi-auth
+  376 | authentication order mab dot1x
+  377 | authentication priority dot1x mab
+  378 | authentication port-control auto
+  379 | mab
+  380 | dot1x pae authenticator
+  381 | spanning-tree portfast
+  382 | spanning-tree bpduguard enable
+  383 | spanning-tree guard root
+  384 |!
+  385 |interface GigabitEthernet1/0/2
+  386 | description ### Teller 01 ###
+  387 | switchport access vlan 30
+  388 | switchport mode access
+  389 | switchport voice vlan 40
+  390 | ip access-group PRE_AUTH_ACL in
+  391 | authentication host-mode multi-auth
+  392 | authentication order mab dot1x
+  393 | authentication priority dot1x mab
+  394 | authentication port-control auto
+  395 | mab
+  396 | dot1x pae authenticator
+  397 | spanning-tree portfast
+  398 | spanning-tree bpduguard enable
+  399 | spanning-tree guard root
+  400 |!
+  401 |interface GigabitEthernet1/0/3
+  402 | description ### Teller 02 ###
+  403 | switchport access vlan 30
+  404 | switchport mode access
+  405 | switchport voice vlan 40
+  406 | ip access-group PRE_AUTH_ACL in
+  407 | authentication host-mode multi-auth
+  408 | authentication order mab dot1x
+  409 | authentication priority dot1x mab
+  410 | authentication port-control auto
+  411 | mab
+  412 | dot1x pae authenticator
+  413 | spanning-tree portfast
+  414 | spanning-tree bpduguard enable
+  415 | spanning-tree guard root
+  416 |!
+  417 |interface GigabitEthernet1/0/4
+  418 | description ### USER/IP-Phone ###
+  419 | switchport access vlan 30
+  420 | switchport mode access
+  421 | switchport voice vlan 40
+  422 | ip access-group PRE_AUTH_ACL in
+  423 | authentication host-mode multi-auth
+  424 | authentication order mab dot1x
+  425 | authentication priority dot1x mab
+  426 | authentication port-control auto
+  427 | mab
+  428 | dot1x pae authenticator
+  429 | spanning-tree portfast
+  430 | spanning-tree bpduguard enable
+  431 | spanning-tree guard root
+  432 |!
+  433 |interface GigabitEthernet1/0/5
+  434 | description ### USER/IP-Phone ###
+  435 | switchport access vlan 30
+  436 | switchport mode access
+  437 | switchport voice vlan 40
+  438 | ip access-group PRE_AUTH_ACL in
+  439 | authentication host-mode multi-auth
+  440 | authentication order mab dot1x
+  441 | authentication priority dot1x mab
+  442 | authentication port-control auto
+  443 | mab
+  444 | dot1x pae authenticator
+  445 | spanning-tree portfast
+  446 | spanning-tree bpduguard enable
+  447 | spanning-tree guard root
+  448 |!
+  449 |interface GigabitEthernet1/0/6
+  450 | description ### Pawning ###
+  451 | switchport access vlan 30
+  452 | switchport mode access
+  453 | switchport voice vlan 40
+  454 | ip access-group PRE_AUTH_ACL in
+  455 | authentication host-mode multi-auth
+  456 | authentication order mab dot1x
+  457 | authentication priority dot1x mab
+  458 | authentication port-control auto
+  459 | mab
+  460 | dot1x pae authenticator
+  461 | spanning-tree portfast
+  462 | spanning-tree bpduguard enable
+  463 | spanning-tree guard root
+  464 |!
+  465 |interface GigabitEthernet1/0/7
+  466 | description ### USER/IP-Phone ###
+  467 | switchport access vlan 30
+  468 | switchport mode access
+  469 | switchport voice vlan 40
+  470 | ip access-group PRE_AUTH_ACL in
+  471 | authentication host-mode multi-auth
+  472 | authentication order mab dot1x
+  473 | authentication priority dot1x mab
+  474 | authentication port-control auto
+  475 | mab
+  476 | dot1x pae authenticator
+  477 | spanning-tree portfast
+  478 | spanning-tree bpduguard enable
+  479 | spanning-tree guard root
+  480 |!
+  481 |interface GigabitEthernet1/0/8
+  482 | description ### OIC ###
+  483 | switchport access vlan 30
+  484 | switchport mode access
+  485 | switchport voice vlan 40
+  486 | ip access-group PRE_AUTH_ACL in
+  487 | authentication host-mode multi-auth
+  488 | authentication order mab dot1x
+  489 | authentication priority dot1x mab
+  490 | authentication port-control auto
+  491 | mab
+  492 | dot1x pae authenticator
+  493 | spanning-tree portfast
+  494 | spanning-tree bpduguard enable
+  495 | spanning-tree guard root
+  496 |!
+  497 |interface GigabitEthernet1/0/9
+  498 | description ### MGR-PC/IP-Phone ###
+  499 | switchport access vlan 20
+  500 | switchport mode access
+  501 | switchport voice vlan 40
+  502 | ip access-group PRE_AUTH_ACL in
+  503 | authentication host-mode multi-auth
+  504 | authentication order mab dot1x
+  505 | authentication priority dot1x mab
+  506 | authentication port-control auto
+  507 | mab
+  508 | dot1x pae authenticator
+  509 | spanning-tree portfast
+  510 | spanning-tree bpduguard enable
+  511 | spanning-tree guard root
+  512 |!
+  513 |interface GigabitEthernet1/0/10
+  514 | description ### USER/IP-Phone ###
+  515 | switchport access vlan 30
+  516 | switchport mode access
+  517 | switchport voice vlan 40
+  518 | ip access-group PRE_AUTH_ACL in
+  519 | authentication host-mode multi-auth
+  520 | authentication order mab dot1x
+  521 | authentication priority dot1x mab
+  522 | authentication port-control auto
+  523 | mab
+  524 | dot1x pae authenticator
+  525 | spanning-tree portfast
+  526 | spanning-tree bpduguard enable
+  527 | spanning-tree guard root
+  528 |!
+  529 |interface GigabitEthernet1/0/11
+  530 | description ### INFRA ###
+  531 | switchport access vlan 10
+  532 | switchport mode access
+  533 | switchport port-security maximum 2
+  534 | switchport port-security violation restrict
+  535 | switchport port-security mac-address sticky
+  536 | switchport port-security mac-address sticky 0017.6110.735f
+  537 | switchport port-security
+  538 | authentication open
+  539 | spanning-tree portfast
+  540 | spanning-tree bpduguard enable
+  541 | spanning-tree guard root
+  542 |!
+  543 |interface GigabitEthernet1/0/12
+  544 | description ### INFRA ###
+  545 | switchport access vlan 10
+  546 | switchport mode access
+  547 | switchport port-security maximum 2
+  548 | switchport port-security violation restrict
+  549 | switchport port-security mac-address sticky
+  550 | switchport port-security mac-address sticky 5838.7926.d2c7
+  551 | switchport port-security
+  552 | authentication open
+  553 | spanning-tree portfast
+  554 | spanning-tree bpduguard enable
+  555 | spanning-tree guard root
+  556 |!
+  557 |interface GigabitEthernet1/0/13
+  558 | description ### USER/IP-Phone ###
+  559 | switchport access vlan 30
+  560 | switchport mode access
+  561 | switchport voice vlan 40
+  562 | ip access-group PRE_AUTH_ACL in
+  563 | authentication host-mode multi-auth
+  564 | authentication order mab dot1x
+  565 | authentication priority dot1x mab
+  566 | authentication port-control auto
+  567 | mab
+  568 | dot1x pae authenticator
+  569 | spanning-tree portfast
+  570 | spanning-tree bpduguard enable
+  571 | spanning-tree guard root
+  572 |!
+  573 |interface GigabitEthernet1/0/14
+  574 | description ### CCTV ACCESS ###
+  575 | switchport access vlan 60
+  576 | switchport mode access
+  577 | authentication open
+  578 | spanning-tree portfast
+  579 | spanning-tree bpduguard enable
+  580 | spanning-tree guard root
+  581 |!
+  582 |interface GigabitEthernet1/0/15
+  583 | description ### USER/IP-Phone ###
+  584 | switchport access vlan 30
+  585 | switchport mode access
+  586 | switchport voice vlan 40
+  587 | ip access-group PRE_AUTH_ACL in
+  588 | authentication host-mode multi-auth
+  589 | authentication order mab dot1x
+  590 | authentication priority dot1x mab
+  591 | authentication port-control auto
+  592 | mab
+  593 | dot1x pae authenticator
+  594 | spanning-tree portfast
+  595 | spanning-tree bpduguard enable
+  596 | spanning-tree guard root
+  597 |!
+  598 |interface GigabitEthernet1/0/16
+  599 | description ### USER/IP-Phone ###
+  600 | switchport access vlan 10
+  601 | switchport mode access
+  602 | switchport voice vlan 40
+  603 | authentication host-mode multi-auth
+  604 | authentication open
+  605 | authentication order mab dot1x
+  606 | authentication priority dot1x mab
+  607 | authentication port-control auto
+  608 | mab
+  609 | dot1x pae authenticator
+  610 | spanning-tree portfast
+  611 | spanning-tree bpduguard enable
+  612 | spanning-tree guard root
+  613 |!
+  614 |interface GigabitEthernet1/0/17
+  615 | description ### USER/IP-Phone ###
+  616 | switchport access vlan 30
+  617 | switchport mode access
+  618 | switchport voice vlan 40
+  619 | ip access-group PRE_AUTH_ACL in
+  620 | authentication host-mode multi-auth
+  621 | authentication order mab dot1x
+  622 | authentication priority dot1x mab
+  623 | authentication port-control auto
+  624 | mab
+  625 | dot1x pae authenticator
+  626 | spanning-tree portfast
+  627 | spanning-tree bpduguard enable
+  628 | spanning-tree guard root
+  629 |!
+  630 |interface GigabitEthernet1/0/18
+  631 | description ### ATM ###
+  632 | switchport access vlan 50
+  633 | switchport mode access
+  634 | switchport port-security maximum 2
+  635 | switchport port-security violation restrict
+  636 | switchport port-security mac-address sticky
+  637 | authentication open
+  638 | spanning-tree portfast
+  639 | spanning-tree bpduguard enable
+  640 | spanning-tree guard root
+  641 |!
+  642 |interface GigabitEthernet1/0/19
+  643 | description ### ATM ###
+  644 | switchport access vlan 50
+  645 | switchport mode access
+  646 | switchport port-security maximum 2
+  647 | switchport port-security violation restrict
+  648 | switchport port-security mac-address sticky
+  649 | authentication open
+  650 | spanning-tree portfast
+  651 | spanning-tree bpduguard enable
+  652 | spanning-tree guard root
+  653 |!
+  654 |interface GigabitEthernet1/0/20
+  655 | description ### USER/IP-Phone ###
+  656 | switchport access vlan 30
+  657 | switchport mode access
+  658 | switchport voice vlan 40
+  659 | ip access-group PRE_AUTH_ACL in
+  660 | authentication host-mode multi-auth
+  661 | authentication order mab dot1x
+  662 | authentication priority dot1x mab
+  663 | authentication port-control auto
+  664 | mab
+  665 | dot1x pae authenticator
+  666 | spanning-tree portfast
+  667 | spanning-tree bpduguard enable
+  668 | spanning-tree guard root
+  669 |!
+  670 |interface GigabitEthernet1/0/21
+  671 | description ### USER/IP-Phone ###
+  672 | switchport access vlan 30
+  673 | switchport mode access
+  674 | switchport voice vlan 40
+  675 | ip access-group PRE_AUTH_ACL in
+  676 | authentication host-mode multi-auth
+  677 | authentication order mab dot1x
+  678 | authentication priority dot1x mab
+  679 | authentication port-control auto
+  680 | mab
+  681 | dot1x pae authenticator
+  682 | spanning-tree portfast
+  683 | spanning-tree bpduguard enable
+  684 | spanning-tree guard root
+  685 |!
+  686 |interface GigabitEthernet1/0/22
+  687 | description ### USER/IP-Phone ###
+  688 | switchport access vlan 30
+  689 | switchport mode access
+  690 | switchport voice vlan 40
+  691 | ip access-group PRE_AUTH_ACL in
+  692 | authentication host-mode multi-auth
+  693 | authentication order mab dot1x
+  694 | authentication priority dot1x mab
+  695 | authentication port-control auto
+  696 | mab
+  697 | dot1x pae authenticator
+  698 | spanning-tree portfast
+  699 | spanning-tree bpduguard enable
+  700 | spanning-tree guard root
+  701 |!
+  702 |interface GigabitEthernet1/0/23
+  703 | description ### USER/IP-Phone ###
+  704 | switchport access vlan 30
+  705 | switchport mode access
+  706 | switchport voice vlan 40
+  707 | ip access-group PRE_AUTH_ACL in
+  708 | authentication host-mode multi-auth
+  709 | authentication order mab dot1x
+  710 | authentication priority dot1x mab
+  711 | authentication port-control auto
+  712 | mab
+  713 | dot1x pae authenticator
+  714 | spanning-tree portfast
+  715 | spanning-tree bpduguard enable
+  716 | spanning-tree guard root
+  717 |!
+  718 |interface GigabitEthernet1/0/24
+  719 | description ### UPLINK_E1110133_DFCC_Bibile_Gig 0/1/0 ###
+  720 | switchport mode trunk
+  721 | ip dhcp snooping trust
+  722 |!
+  723 |interface GigabitEthernet1/1/1
+  724 | shutdown
+  725 |!
+  726 |interface GigabitEthernet1/1/2
+  727 | shutdown
+  728 |!
+  729 |interface GigabitEthernet1/1/3
+  730 | shutdown
+  731 |!
+  732 |interface GigabitEthernet1/1/4
+  733 | shutdown
+  734 |!
+  735 |interface Bluetooth0/4
+  736 | vrf forwarding Mgmt-vrf
+  737 | no ip address
+  738 | shutdown
+  739 | negotiation auto
+  740 | enable
+  741 |!
+  742 |interface Vlan1
+  743 | no ip address
+  744 | shutdown
+  745 |!
+  746 |interface Vlan10
+  747 | description ### Management VLAN ###
+  748 | ip address 172.22.131.16 255.255.255.192
+  749 |!
+  750 |ip default-gateway 172.22.131.62
+  751 |no ip http server
+  752 |ip http authentication local
+  753 |no ip http secure-server
+  754 |ip http client source-interface Vlan10
+  755 |ip forward-protocol nd
+  756 |ip tacacs source-interface Vlan10 
+  757 |ip ssh bulk-mode 131072
+  758 |ip ssh time-out 60
+  759 |ip ssh source-interface Vlan10
+  760 |!
+  761 |ip access-list extended PRE_AUTH_ACL
+  762 | 10 permit udp any eq bootpc any eq bootps
+  763 | 20 permit udp any eq bootps any eq bootpc
+  764 | 30 permit udp any any eq domain
+  765 | 40 permit tcp any any eq domain
+  766 | 50 permit tcp any eq domain any
+  767 | 60 permit udp any eq domain any
+  768 | 70 permit ip any host 192.168.40.59
+  769 | 80 permit ip host 192.168.40.59 any
+  770 | 90 permit ip any host 192.168.40.33
+  771 | 100 permit ip host 192.168.40.33 any
+  772 | 110 permit ip any host 10.18.40.59
+  773 | 120 permit ip host 10.18.40.59 any
+  774 | 130 permit ip any host 10.18.40.33
+  775 | 140 permit ip host 10.18.40.33 any
+  776 | 150 permit ip any host 10.18.40.34
+  777 | 160 permit ip host 10.18.40.34 any
+  778 | 170 permit ip any host 192.168.40.34
+  779 | 180 permit ip host 192.168.40.34 any
+  780 | 190 permit tcp any any eq 3389
+  781 | 200 permit tcp any eq 3389 any
+  782 | 210 permit icmp any any
+  783 | 220 deny ip any any
+  784 |!
+  785 |logging source-interface Vlan10
+  786 |logging host 192.168.40.195 transport udp port 30012
+  787 |logging host 10.18.40.195 transport udp port 30012
+  788 |logging host 10.18.57.50
+  789 |!
+  790 |snmp-server group default v3 priv 
+  791 |snmp-server trap-source Vlan10
+  792 |snmp-server enable traps snmp authentication linkdown linkup coldstart warmstart
+  793 |snmp-server enable traps flowmon
+  794 |snmp-server enable traps entity-perf throughput-notif
+  795 |snmp-server enable traps call-home message-send-fail server-fail
+  796 |snmp-server enable traps tty
+  797 |snmp-server enable traps eigrp
+  798 |snmp-server enable traps ospf state-change
+  799 |snmp-server enable traps ospf errors
+  800 |snmp-server enable traps ospf retransmit
+  801 |snmp-server enable traps ospf lsa
+  802 |snmp-server enable traps ospf cisco-specific state-change nssa-trans-change
+  803 |snmp-server enable traps ospf cisco-specific state-change shamlink interface
+  804 |snmp-server enable traps ospf cisco-specific state-change shamlink neighbor
+  805 |snmp-server enable traps ospf cisco-specific errors
+  806 |snmp-server enable traps ospf cisco-specific retransmit
+  807 |snmp-server enable traps ospf cisco-specific lsa
+  808 |snmp-server enable traps bfd
+  809 |snmp-server enable traps smart-license
+  810 |snmp-server enable traps auth-framework sec-violation
+  811 |snmp-server enable traps rep
+  812 |snmp-server enable traps aaa_server
+  813 |snmp-server enable traps memory bufferpeak
+  814 |snmp-server enable traps config-copy
+  815 |snmp-server enable traps config
+  816 |snmp-server enable traps config-ctid
+  817 |snmp-server enable traps energywise
+  818 |snmp-server enable traps fru-ctrl
+  819 |snmp-server enable traps entity
+  820 |snmp-server enable traps flash insertion removal lowspace
+  821 |snmp-server enable traps power-ethernet group 1 threshold 80
+  822 |snmp-server enable traps power-ethernet police
+  823 |snmp-server enable traps cpu threshold
+  824 |snmp-server enable traps syslog
+  825 |snmp-server enable traps udld link-fail-rpt
+  826 |snmp-server enable traps udld status-change
+  827 |snmp-server enable traps vtp
+  828 |snmp-server enable traps vlancreate
+  829 |snmp-server enable traps vlandelete
+  830 |snmp-server enable traps port-security
+  831 |snmp-server enable traps envmon
+  832 |snmp-server enable traps stackwise
+  833 |snmp-server enable traps dhcp
+  834 |snmp-server enable traps event-manager
+  835 |snmp-server enable traps ike policy add
+  836 |snmp-server enable traps ike policy delete
+  837 |snmp-server enable traps ike tunnel start
+  838 |snmp-server enable traps ike tunnel stop
+  839 |snmp-server enable traps ipsec cryptomap add
+  840 |snmp-server enable traps ipsec cryptomap delete
+  841 |snmp-server enable traps ipsec cryptomap attach
+  842 |snmp-server enable traps ipsec cryptomap detach
+  843 |snmp-server enable traps ipsec tunnel start
+  844 |snmp-server enable traps ipsec tunnel stop
+  845 |snmp-server enable traps ipsec too-many-sas
+  846 |snmp-server enable traps ospfv3 state-change
+  847 |snmp-server enable traps ospfv3 errors
+  848 |snmp-server enable traps ipmulticast
+  849 |snmp-server enable traps pimstdmib neighbor-loss invalid-register invalid-join-prune rp-mapping-change interface-election
+  850 |snmp-server enable traps msdp
+  851 |snmp-server enable traps pim neighbor-change rp-mapping-change invalid-pim-message
+  852 |snmp-server enable traps bridge newroot topologychange
+  853 |snmp-server enable traps stpx inconsistency root-inconsistency loop-inconsistency
+  854 |snmp-server enable traps cef resource-failure peer-state-change peer-fib-state-change inconsistency
+  855 |snmp-server enable traps bulkstat collection transfer
+  856 |snmp-server enable traps mac-notification change move threshold
+  857 |snmp-server enable traps errdisable
+  858 |snmp-server enable traps vlan-membership
+  859 |snmp-server enable traps transceiver all
+  860 |snmp-server enable traps vrfmib vrf-up vrf-down vnet-trunk-up vnet-trunk-down
+  861 |snmp-server enable traps rf
+  862 |snmp-server host 10.18.57.50 version 3 priv xxxxxxxx 
+  863 |tacacs server ISE1
+  864 | address ipv4 192.168.57.65
+  865 | key xxxxxxxx
+  866 |tacacs server ISE2
+  867 | address ipv4 10.18.57.65
+  868 | key xxxxxxxx
+  869 |!
+  870 |radius server ISE1
+  871 | address ipv4 192.168.57.65 auth-port 1812 acct-port 1813
+  872 | key xxxxxxxx
+  873 |!
+  874 |radius server ISE2
+  875 | address ipv4 10.18.57.65 auth-port 1812 acct-port 1813
+  876 | key xxxxxxxx
+  877 |!
+  878 |!
+  879 |!
+  880 |control-plane
+  881 | service-policy input system-cpp-policy
+  882 |!
+  883 |banner login ^C
+  884 |*****************************************************************************
+  885 |*                                WARNING:                                   *
+  886 |* Access to this Information System or Device is restricted to authorized   *
+  887 |* users only. All activities within the systems or Devices would be         *
+  888 |* monitored and recorded.Using the Information System or Device without     *
+  889 |* valid authorization, or in excess of provided authorization, is subject   *
+  890 |* to disciplinary action or legal prosecution. If you are not authorized    *
+  891 |* to access this Information System or Device, please do not proceed.       *
+  892 |* Usage may be monitored.                                                   *
+  893 |*****************************************************************************  
+  894 |^C
+  895 |!
+  896 |line con 0
+  897 | stopbits 1
+  898 |line vty 0 4
+  899 | transport input ssh
+  900 |line vty 5 15
+  901 | transport input ssh
+  902 |!
+  903 |ntp server 192.168.40.54
+  904 |ntp server 10.18.40.54
+  905 |!
+  906 |!
+  907 |!
+  908 |!
+  909 |!
+  910 |!
+  911 |telemetry ietf subscription 500
+  912 | encoding encode-tdl
+  913 | filter tdl-uri /services;serviceName=ios_oper/poe_port_detail
+  914 | receiver-type protocol
+  915 | source-address 172.22.131.16
+  916 | stream native
+  917 | update-policy periodic 60000
+  918 | receiver name DNAC_ASSURANCE_RECEIVER
+  919 |telemetry ietf subscription 501
+  920 | encoding encode-tdl
+  921 | filter tdl-uri /services;serviceName=ios_oper/poe_module
+  922 | receiver-type protocol
+  923 | source-address 172.22.131.16
+  924 | stream native
+  925 | update-policy periodic 60000
+  926 | receiver name DNAC_ASSURANCE_RECEIVER
+  927 |telemetry ietf subscription 502
+  928 | encoding encode-tdl
+  929 | filter tdl-uri /services;serviceName=ios_oper/poe_stack
+  930 | receiver-type protocol
+  931 | source-address 172.22.131.16
+  932 | stream native
+  933 | update-policy periodic 60000
+  934 | receiver name DNAC_ASSURANCE_RECEIVER
+  935 |telemetry ietf subscription 503
+  936 | encoding encode-tdl
+  937 | filter tdl-uri /services;serviceName=ios_oper/poe_switch
+  938 | receiver-type protocol
+  939 | source-address 172.22.131.16
+  940 | stream native
+  941 | update-policy periodic 60000
+  942 | receiver name DNAC_ASSURANCE_RECEIVER
+  943 |telemetry ietf subscription 504
+  944 | encoding encode-tdl
+  945 | filter nested-uri /services;serviceName=ios_oper/platform_component;cname=0?platform_properties
+  946 | receiver-type protocol
+  947 | source-address 172.22.131.16
+  948 | stream native
+  949 | update-policy periodic 30000
+  950 | receiver name DNAC_ASSURANCE_RECEIVER
+  951 |telemetry ietf subscription 550
+  952 | encoding encode-tdl
+  953 | filter tdl-uri /services;serviceName=smevent/sessionevent
+  954 | receiver-type protocol
+  955 | source-address 172.22.131.16
+  956 | stream native
+  957 | update-policy on-change
+  958 | receiver name DNAC_ASSURANCE_RECEIVER
+  959 |telemetry ietf subscription 551
+  960 | encoding encode-tdl
+  961 | filter tdl-uri /services;serviceName=sessmgr_oper/session_context_data
+  962 | receiver-type protocol
+  963 | source-address 172.22.131.16
+  964 | stream native
+  965 | update-policy periodic 360000
+  966 | receiver name DNAC_ASSURANCE_RECEIVER
+  967 |telemetry ietf subscription 552
+  968 | encoding encode-tdl
+  969 | filter tdl-uri /services;serviceName=iosevent/sisf_mac_oper_state
+  970 | receiver-type protocol
+  971 | source-address 172.22.131.16
+  972 | stream native
+  973 | update-policy on-change
+  974 | receiver name DNAC_ASSURANCE_RECEIVER
+  975 |telemetry ietf subscription 553
+  976 | encoding encode-tdl
+  977 | filter tdl-uri /services;serviceName=ios_oper/sisf_db_wired_mac
+  978 | receiver-type protocol
+  979 | source-address 172.22.131.16
+  980 | stream native
+  981 | update-policy periodic 360000
+  982 | receiver name DNAC_ASSURANCE_RECEIVER
+  983 |telemetry ietf subscription 554
+  984 | encoding encode-tdl
+  985 | filter tdl-uri /services;serviceName=ios_oper/cdp_neighbor_detail
+  986 | receiver-type protocol
+  987 | source-address 172.22.131.16
+  988 | stream native
+  989 | update-policy periodic 360000
+  990 | receiver name DNAC_ASSURANCE_RECEIVER
+  991 |telemetry ietf subscription 555
+  992 | encoding encode-tdl
+  993 | filter tdl-uri /services;serviceName=ios_oper/cdp_neighbor_detail
+  994 | receiver-type protocol
+  995 | source-address 172.22.131.16
+  996 | stream native
+  997 | update-policy on-change
+  998 | receiver name DNAC_ASSURANCE_RECEIVER
+  999 |telemetry ietf subscription 600
+ 1000 | encoding encode-tdl
+ 1001 | filter tdl-uri /services;serviceName=sessmgr_oper/tbl_aaa_servers_stat
+ 1002 | receiver-type protocol
+ 1003 | source-address 172.22.131.16
+ 1004 | stream native
+ 1005 | update-policy periodic 60000
+ 1006 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1007 |telemetry ietf subscription 601
+ 1008 | encoding encode-tdl
+ 1009 | filter tdl-uri /services;serviceName=sessmgr_oper/tbl_aaa_servers_stat
+ 1010 | receiver-type protocol
+ 1011 | source-address 172.22.131.16
+ 1012 | stream native
+ 1013 | update-policy on-change
+ 1014 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1015 |telemetry ietf subscription 602
+ 1016 | encoding encode-tdl
+ 1017 | filter tdl-uri /services;serviceName=ios_emul_oper/lisp_routers;top_id=0/sessions
+ 1018 | receiver-type protocol
+ 1019 | source-address 172.22.131.16
+ 1020 | stream native
+ 1021 | update-policy periodic 360000
+ 1022 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1023 |telemetry ietf subscription 603
+ 1024 | encoding encode-tdl
+ 1025 | filter tdl-uri /services;serviceName=iosevent/lisp_tcp_session_state
+ 1026 | receiver-type protocol
+ 1027 | source-address 172.22.131.16
+ 1028 | stream native
+ 1029 | update-policy on-change
+ 1030 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1031 |telemetry ietf subscription 604
+ 1032 | encoding encode-tdl
+ 1033 | filter nested-uri /services;serviceName=ios_emul_oper/lisp_routers;top_id=0/instances;iid=0/af;iaftype=LISP_TDL_IAF_IPV4/lisp_publisher
+ 1034 | receiver-type protocol
+ 1035 | source-address 172.22.131.16
+ 1036 | stream native
+ 1037 | update-policy periodic 360000
+ 1038 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1039 |telemetry ietf subscription 605
+ 1040 | encoding encode-tdl
+ 1041 | filter tdl-uri /services;serviceName=iosevent/lisp_pubsub_session_state
+ 1042 | receiver-type protocol
+ 1043 | source-address 172.22.131.16
+ 1044 | stream native
+ 1045 | update-policy on-change
+ 1046 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1047 |telemetry ietf subscription 606
+ 1048 | encoding encode-tdl
+ 1049 | filter nested-uri /services;serviceName=ios_emul_oper/lisp_routers;top_id=0/remote_locator_sets;name=default-etr-locator-set-ipv4/rem_loc_set_rlocs_si
+ 1050 | receiver-type protocol
+ 1051 | source-address 172.22.131.16
+ 1052 | stream native
+ 1053 | update-policy periodic 360000
+ 1054 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1055 |telemetry ietf subscription 607
+ 1056 | encoding encode-tdl
+ 1057 | filter tdl-uri /services;serviceName=iosevent/lisp_etr_si_type
+ 1058 | receiver-type protocol
+ 1059 | source-address 172.22.131.16
+ 1060 | stream native
+ 1061 | update-policy on-change
+ 1062 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1063 |telemetry ietf subscription 608
+ 1064 | encoding encode-tdl
+ 1065 | filter tdl-uri /services;serviceName=ios_emul_oper/cts_env_data
+ 1066 | receiver-type protocol
+ 1067 | source-address 172.22.131.16
+ 1068 | stream native
+ 1069 | update-policy periodic 60000
+ 1070 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1071 |telemetry ietf subscription 609
+ 1072 | encoding encode-tdl
+ 1073 | filter tdl-uri /services;serviceName=ios_emul_oper/bgp_state;singleton_id=0/neighbor
+ 1074 | receiver-type protocol
+ 1075 | source-address 172.22.131.16
+ 1076 | stream native
+ 1077 | update-policy periodic 360000
+ 1078 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1079 |telemetry ietf subscription 610
+ 1080 | encoding encode-tdl
+ 1081 | filter tdl-uri /services;serviceName=ios_emul_oper/bgp_state;singleton_id=0/neighbor
+ 1082 | receiver-type protocol
+ 1083 | source-address 172.22.131.16
+ 1084 | stream native
+ 1085 | update-policy on-change
+ 1086 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1087 |telemetry ietf subscription 611
+ 1088 | encoding encode-tdl
+ 1089 | filter tdl-uri /services;serviceName=iosevent/lisp_extranet_policy_state
+ 1090 | receiver-type protocol
+ 1091 | source-address 172.22.131.16
+ 1092 | stream native
+ 1093 | update-policy on-change
+ 1094 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1095 |telemetry ietf subscription 612
+ 1096 | encoding encode-tdl
+ 1097 | filter nested-uri /services;serviceName=ios_emul_oper/lisp_routers;top_id=0/instances;iid=1/extranets
+ 1098 | receiver-type protocol
+ 1099 | source-address 172.22.131.16
+ 1100 | stream native
+ 1101 | update-policy periodic 360000
+ 1102 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1103 |telemetry ietf subscription 613
+ 1104 | encoding encode-tdl
+ 1105 | filter nested-uri /services;serviceName=ios_emul_oper/lisp_routers;top_id=0/instances;iid=1/extranets;extranet_name=ext1/extranet_member_instances
+ 1106 | receiver-type protocol
+ 1107 | source-address 172.22.131.16
+ 1108 | stream native
+ 1109 | update-policy periodic 360000
+ 1110 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1111 |telemetry ietf subscription 614
+ 1112 | encoding encode-tdl
+ 1113 | filter nested-uri /services;serviceName=ios_oper/nve_oper;unit_number=0/nve_vni_oper
+ 1114 | receiver-type protocol
+ 1115 | source-address 172.22.131.16
+ 1116 | stream native
+ 1117 | update-policy periodic 960000
+ 1118 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1119 |telemetry ietf subscription 615
+ 1120 | encoding encode-tdl
+ 1121 | filter nested-uri /services;serviceName=ios_oper/nve_oper;unit_number=0/nve_peer_oper
+ 1122 | receiver-type protocol
+ 1123 | source-address 172.22.131.16
+ 1124 | stream native
+ 1125 | update-policy periodic 960000
+ 1126 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1127 |telemetry ietf subscription 616
+ 1128 | encoding encode-tdl
+ 1129 | filter nested-uri /services;serviceName=ios_oper/nve_oper
+ 1130 | receiver-type protocol
+ 1131 | source-address 172.22.131.16
+ 1132 | stream native
+ 1133 | update-policy on-change
+ 1134 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1135 |telemetry ietf subscription 750
+ 1136 | encoding encode-tdl
+ 1137 | filter tdl-uri /services;serviceName=ios_emul_oper/environment_sensor
+ 1138 | receiver-type protocol
+ 1139 | source-address 172.22.131.16
+ 1140 | stream native
+ 1141 | update-policy periodic 30000
+ 1142 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1143 |telemetry ietf subscription 751
+ 1144 | encoding encode-tdl
+ 1145 | filter tdl-uri /services;serviceName=ios_oper/platform_component
+ 1146 | receiver-type protocol
+ 1147 | source-address 172.22.131.16
+ 1148 | stream native
+ 1149 | update-policy periodic 30000
+ 1150 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1151 |telemetry ietf subscription 1020
+ 1152 | encoding encode-tdl
+ 1153 | filter tdl-uri /services;serviceName=iosevent/install_status
+ 1154 | receiver-type protocol
+ 1155 | source-address 172.22.131.16
+ 1156 | stream native
+ 1157 | update-policy on-change
+ 1158 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1159 |telemetry ietf subscription 8882
+ 1160 | encoding encode-tdl
+ 1161 | filter tdl-transform trustSecCounterDelta
+ 1162 | receiver-type protocol
+ 1163 | source-address 172.22.131.16
+ 1164 | stream native
+ 1165 | update-policy periodic 90000
+ 1166 | receiver name DNAC_ASSURANCE_RECEIVER
+ 1167 |telemetry transform trustSecCounterDelta
+ 1168 | input table cts_rolebased_policy
+ 1169 |  field dst_sgt
+ 1170 |  field src_sgt
+ 1171 |  field sgacl_name
+ 1172 |  field monitor_mode
+ 1173 |  field num_of_sgacl
+ 1174 |  field policy_life_time
+ 1175 |  field total_deny_count
+ 1176 |  field last_updated_time
+ 1177 |  field total_permit_count
+ 1178 |  join-key cts_role_based_policy_key
+ 1179 |  logical-op and
+ 1180 |  type mandatory
+ 1181 |  uri /services;serviceName=ios_emul_oper/cts_rolebased_policy
+ 1182 | operation 1
+ 1183 |  output-field 1
+ 1184 |   field cts_rolebased_policy.src_sgt
+ 1185 |  output-field 2
+ 1186 |   field cts_rolebased_policy.dst_sgt
+ 1187 |  output-field 3
+ 1188 |   field cts_rolebased_policy.total_permit_count
+ 1189 |   output-op type delta
+ 1190 |  output-field 4
+ 1191 |   field cts_rolebased_policy.total_deny_count
+ 1192 |   output-op type delta
+ 1193 |  output-field 5
+ 1194 |   field cts_rolebased_policy.sgacl_name
+ 1195 |  output-field 6
+ 1196 |   field cts_rolebased_policy.monitor_mode
+ 1197 |  output-field 7
+ 1198 |   field cts_rolebased_policy.num_of_sgacl
+ 1199 |  output-field 8
+ 1200 |   field cts_rolebased_policy.policy_life_time
+ 1201 |  output-field 9
+ 1202 |   field cts_rolebased_policy.last_updated_time
+ 1203 | specified
+ 1204 |netconf-yang
+ 1205 |end
+ 1206 |
+ 1207 |

@@ -14,7 +14,7 @@ from scoring.risk_engine import assess_findings
 from database.auth import (
     admin_required, authenticate, create_user, csrf_token, get_current_user,
     init_auth, is_safe_url, list_users, login_required, reset_password,
-    set_user_status, update_user,
+    revoke_session, set_user_status, update_user, create_session,
 )
 
 
@@ -44,8 +44,16 @@ app.config["SECRET_KEY"] = secret_key or "encca-local-development-only-key"
 app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-app.config["SESSION_COOKIE_SECURE"] = bool(os.environ.get("VERCEL") or os.environ.get("FLASK_HTTPS"))
-app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=60)
+app.config["SESSION_COOKIE_SECURE"] = (
+    os.environ.get("VERCEL", "").lower() in {"1", "true", "yes"}
+    or os.environ.get("FLASK_HTTPS", "").lower() in {"1", "true", "yes"}
+)
+app.config["SESSION_COOKIE_PATH"] = "/"
+app.config["SESSION_COOKIE_NAME"] = "encca_session"
+app.config["ENCCA_SESSION_IDLE_TIMEOUT_MINUTES"] = int(os.environ.get("ENCCA_SESSION_IDLE_TIMEOUT_MINUTES", "30"))
+app.config["ENCCA_SESSION_ABSOLUTE_TIMEOUT_HOURS"] = int(os.environ.get("ENCCA_SESSION_ABSOLUTE_TIMEOUT_HOURS", "8"))
+app.config["ENCCA_MAX_CONCURRENT_SESSIONS"] = int(os.environ.get("ENCCA_MAX_CONCURRENT_SESSIONS", "3"))
+app.config["ENCCA_SESSION_TOUCH_MINUTES"] = 1
 for directory in (UPLOAD_DIR, AUDIT_RECORD_DIR, REPORT_DIR):
     directory.mkdir(parents=True, exist_ok=True)
 init_auth(app, RUNTIME_DIR / "private" / "encca_auth.sqlite3")
@@ -359,14 +367,9 @@ def login():
         if user is None:
             flash("Invalid username or password.")
             return render_template("login.html", provisioning_required=provisioning_required), 401
-        # Clearing prior values prevents session fixation and a new CSRF token
-        # is created on the next form render.
-        session.clear()
-        session.permanent = True
-        session["user_id"] = user["id"]
-        session["username"] = user["username"]
-        session["role"] = user["role"]
-        session["authenticated"] = True
+        # Revoke the anonymous session and issue a fresh authenticated token.
+        revoke_session()
+        create_session(user["id"])
         destination = request.form.get("next") or request.args.get("next")
         return redirect(destination if is_safe_url(destination) else url_for("upload"))
     return render_template("login.html", provisioning_required=provisioning_required)
@@ -396,6 +399,7 @@ def register():
 @app.route("/logout")
 @login_required
 def logout():
+    revoke_session()
     session.clear()
     flash("You have been signed out.")
     return redirect(url_for("login"))

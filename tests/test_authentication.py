@@ -1,17 +1,21 @@
 from io import BytesIO
 import json
+import re
+from datetime import datetime, timedelta, timezone
+import hashlib
 
 import app as app_module
 import pytest
 
-from database.auth import bootstrap_admin_from_environment, create_user, get_user, initialize_database
+from database.auth import bootstrap_admin_from_environment, create_user, get_db, get_user, initialize_database
 
 
 def csrf_token(client, path="/login"):
     response = client.get(path)
     assert response.status_code == 200
-    with client.session_transaction() as stored_session:
-        return stored_session["csrf_token"]
+    match = re.search(rb'name="csrf_token" value="([^"]+)"', response.data)
+    assert match
+    return match.group(1).decode()
 
 
 @pytest.fixture()
@@ -188,3 +192,78 @@ def test_admin_can_view_legacy_history_and_analyst_cannot_enumerate_it(client):
     add_user()
     assert login(client).status_code == 302
     assert client.get("/audit/abcdef123456").status_code == 404
+
+
+def session_id(client):
+    with client.session_transaction() as stored_session:
+        return stored_session.get("session_id")
+
+
+def test_login_rotates_identifier_and_cookie_contains_no_identity(client):
+    add_user()
+    csrf = csrf_token(client)
+    before_login = session_id(client)
+    assert login(client).status_code == 302
+    after_login = session_id(client)
+    assert before_login and after_login and before_login != after_login
+    with client.session_transaction() as stored_session:
+        assert set(stored_session) == {"session_id"}
+
+
+def test_idle_and_absolute_timeout_reject_session(client):
+    add_user()
+    assert login(client).status_code == 302
+    sid = session_id(client)
+    old = (datetime.now(timezone.utc) - timedelta(minutes=31)).isoformat(timespec="seconds")
+    with app_module.app.app_context():
+        get_db().execute("UPDATE user_sessions SET last_activity_at = ? WHERE session_token_hash = ?", (old, hashlib.sha256(sid.encode()).hexdigest()))
+        get_db().commit()
+    assert client.get("/").status_code == 302
+
+    assert login(client).status_code == 302
+    sid = session_id(client)
+    old = (datetime.now(timezone.utc) - timedelta(minutes=1)).isoformat(timespec="seconds")
+    with app_module.app.app_context():
+        get_db().execute("UPDATE user_sessions SET absolute_expires_at = ? WHERE session_token_hash = ?", (old, hashlib.sha256(sid.encode()).hexdigest()))
+        get_db().commit()
+    assert client.get("/").status_code == 302
+
+
+def test_disabling_user_revokes_all_sessions(client):
+    add_user()
+    other_client = app_module.app.test_client()
+    assert login(client).status_code == 302
+    assert login(other_client).status_code == 302
+    with app_module.app.app_context():
+        from database.auth import set_user_status
+        assert set_user_status(1, False, actor_id=99)[0]
+    assert client.get("/").status_code == 302
+    assert other_client.get("/").status_code == 302
+
+
+def test_fourth_login_revokes_oldest_session(client):
+    add_user()
+    clients = [client] + [app_module.app.test_client() for _ in range(3)]
+    for current_client in clients:
+        assert login(current_client).status_code == 302
+    identifiers = [session_id(current_client) for current_client in clients]
+    with app_module.app.app_context():
+        rows = get_db().execute(
+            "SELECT session_token_hash, revoked_at FROM user_sessions WHERE user_id = 1 ORDER BY created_at ASC, id ASC"
+        ).fetchall()
+    assert len(rows) == 4
+    assert rows[0]["session_token_hash"] == hashlib.sha256(identifiers[0].encode()).hexdigest()
+    assert rows[0]["revoked_at"] is not None
+    assert all(row["revoked_at"] is None for row in rows[1:])
+
+
+def test_password_reset_revokes_existing_sessions(client):
+    add_user("target", "target@example.test")
+    other_client = app_module.app.test_client()
+    assert login(client, identity="target").status_code == 302
+    assert login(other_client, identity="target").status_code == 302
+    with app_module.app.app_context():
+        from database.auth import reset_password
+        assert reset_password(1, "ChangedPassword!1")[0]
+    assert client.get("/").status_code == 302
+    assert other_client.get("/").status_code == 302

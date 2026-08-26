@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hmac
+import hashlib
 import re
 import secrets
 import sqlite3
@@ -60,6 +61,22 @@ def initialize_database() -> None:
         );
         CREATE INDEX IF NOT EXISTS idx_users_role_active ON users(role, is_active);
         CREATE INDEX IF NOT EXISTS idx_users_locked_until ON users(locked_until);
+        CREATE TABLE IF NOT EXISTS user_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_token_hash TEXT NOT NULL UNIQUE,
+            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+            created_at TEXT NOT NULL,
+            last_activity_at TEXT NOT NULL,
+            expires_at TEXT NOT NULL,
+            absolute_expires_at TEXT NOT NULL,
+            revoked_at TEXT,
+            ip_address TEXT,
+            user_agent TEXT,
+            remember_me INTEGER NOT NULL DEFAULT 0 CHECK (remember_me IN (0, 1)),
+            csrf_token_hash TEXT
+        );
+        CREATE INDEX IF NOT EXISTS idx_sessions_user_active ON user_sessions(user_id, revoked_at);
+        CREATE INDEX IF NOT EXISTS idx_sessions_expiration ON user_sessions(expires_at, absolute_expires_at);
         """
     )
     db.commit()
@@ -155,6 +172,8 @@ def update_user(user_id: int, email: str, role: str, is_active: bool, actor_id: 
             "UPDATE users SET email = ?, role = ?, is_active = ?, updated_at = ? WHERE id = ?",
             (email, role, int(is_active), utcnow(), user_id),
         )
+        if not is_active:
+            revoke_all_user_sessions(user_id)
         get_db().commit()
     except sqlite3.IntegrityError:
         return False, "Username or email is already in use."
@@ -173,6 +192,8 @@ def set_user_status(user_id: int, is_active: bool, actor_id: int) -> tuple[bool,
         "UPDATE users SET is_active = ?, updated_at = ? WHERE id = ?",
         (int(is_active), utcnow(), user_id),
     )
+    if not is_active:
+        revoke_all_user_sessions(user_id)
     get_db().commit()
     return True, "User status updated."
 
@@ -187,6 +208,7 @@ def reset_password(user_id: int, password: str) -> tuple[bool, str]:
         "UPDATE users SET password_hash = ?, failed_login_attempts = 0, locked_until = NULL, updated_at = ? WHERE id = ?",
         (generate_password_hash(password), utcnow(), user_id),
     )
+    revoke_all_user_sessions(user_id)
     get_db().commit()
     return True, "Password reset successfully."
 
@@ -244,15 +266,127 @@ def authenticate(identity: str, password: str):
     return user
 
 
-def get_current_user():
-    user_id = session.get("user_id")
-    if not user_id:
+def _session_config(name: str, default):
+    return current_app.config.get(name, default)
+
+
+def _session_hash(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def _session_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _parse_time(value: str) -> datetime:
+    return datetime.fromisoformat(value)
+
+
+def cleanup_expired_sessions() -> None:
+    cutoff = (_session_now() - timedelta(days=1)).isoformat(timespec="seconds")
+    get_db().execute(
+        "DELETE FROM user_sessions WHERE absolute_expires_at < ? OR (revoked_at IS NOT NULL AND revoked_at < ?)",
+        (utcnow(), cutoff),
+    )
+    get_db().commit()
+
+
+def create_session(user_id: int | None = None, remember_me: bool = False):
+    cleanup_expired_sessions()
+    now = _session_now()
+    idle_timeout = timedelta(minutes=int(_session_config("ENCCA_SESSION_IDLE_TIMEOUT_MINUTES", 30)))
+    absolute_timeout = timedelta(hours=int(_session_config("ENCCA_SESSION_ABSOLUTE_TIMEOUT_HOURS", 8)))
+    token = secrets.token_urlsafe(32)
+    now_text = now.isoformat(timespec="seconds")
+    db = get_db()
+    if user_id is not None:
+        max_sessions = int(_session_config("ENCCA_MAX_CONCURRENT_SESSIONS", 3))
+        active = db.execute(
+            "SELECT id FROM user_sessions WHERE user_id = ? AND revoked_at IS NULL "
+            "AND expires_at >= ? AND absolute_expires_at >= ? ORDER BY created_at ASC, id ASC",
+            (user_id, now_text, now_text),
+        ).fetchall()
+        for old_session in active[:max(0, len(active) - max_sessions + 1)]:
+            db.execute("UPDATE user_sessions SET revoked_at = ? WHERE id = ?", (now_text, old_session["id"]))
+    db.execute(
+        "INSERT INTO user_sessions (session_token_hash, user_id, created_at, last_activity_at, expires_at, "
+        "absolute_expires_at, ip_address, user_agent, remember_me) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (_session_hash(token), user_id, now_text, now_text, (now + idle_timeout).isoformat(timespec="seconds"),
+         (now + absolute_timeout).isoformat(timespec="seconds"), request.remote_addr,
+         request.user_agent.string[:512], int(remember_me)),
+    )
+    db.commit()
+    session.clear()
+    session["session_id"] = token
+    return token
+
+
+def get_current_session():
+    token = session.get("session_id")
+    if not token:
         return None
-    user = get_user(user_id)
-    if user is None or not user["is_active"]:
+    return get_db().execute(
+        "SELECT * FROM user_sessions WHERE session_token_hash = ?", (_session_hash(token),)
+    ).fetchone()
+
+
+def revoke_session(token: str | None = None) -> None:
+    token = token or session.get("session_id")
+    if token:
+        get_db().execute(
+            "UPDATE user_sessions SET revoked_at = COALESCE(revoked_at, ?) WHERE session_token_hash = ?",
+            (utcnow(), _session_hash(token)),
+        )
+        get_db().commit()
+
+
+def revoke_all_user_sessions(user_id: int) -> None:
+    get_db().execute(
+        "UPDATE user_sessions SET revoked_at = COALESCE(revoked_at, ?) WHERE user_id = ? AND revoked_at IS NULL",
+        (utcnow(), user_id),
+    )
+
+
+def validate_session() -> bool:
+    current = get_current_session()
+    if current is None:
+        return not session.get("session_id")
+    now = _session_now()
+    try:
+        idle_timeout = timedelta(minutes=int(_session_config("ENCCA_SESSION_IDLE_TIMEOUT_MINUTES", 30)))
+        invalid = (
+            current["revoked_at"] is not None
+            or now - _parse_time(current["last_activity_at"]) > idle_timeout
+            or _parse_time(current["expires_at"]) < now
+            or _parse_time(current["absolute_expires_at"]) < now
+        )
+    except (TypeError, ValueError):
+        invalid = True
+    if current["user_id"] is not None:
+        user = get_user(current["user_id"])
+        invalid = invalid or user is None or not user["is_active"]
+    if invalid:
+        revoke_session()
         session.clear()
+        return False
+    if current["user_id"] is not None:
+        touch_interval = timedelta(minutes=int(_session_config("ENCCA_SESSION_TOUCH_MINUTES", 1)))
+        if now - _parse_time(current["last_activity_at"]) >= touch_interval:
+            get_db().execute(
+                "UPDATE user_sessions SET last_activity_at = ?, expires_at = ? WHERE id = ?",
+                (now.isoformat(timespec="seconds"),
+                 (now + timedelta(minutes=int(_session_config("ENCCA_SESSION_IDLE_TIMEOUT_MINUTES", 30)))).isoformat(timespec="seconds"),
+                 current["id"]),
+            )
+            get_db().commit()
+    return True
+
+
+def get_current_user():
+    current = get_current_session()
+    if current is None or current["user_id"] is None or not validate_session():
         return None
-    return user
+    return get_user(current["user_id"])
 
 
 def login_required(view):
@@ -260,6 +394,9 @@ def login_required(view):
     def wrapped(*args, **kwargs):
         user = get_current_user()
         if user is None:
+            if request.accept_mimetypes.best == "application/json" or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                from flask import jsonify
+                return jsonify(error="authentication_required"), 401
             flash("Please sign in to access ENCCA.")
             return redirect(url_for("login", next=request.full_path if request.query_string else request.path))
         g.current_user = user
@@ -278,17 +415,27 @@ def admin_required(view):
 
 
 def csrf_token() -> str:
-    token = session.get("csrf_token")
-    if not token:
-        token = secrets.token_urlsafe(32)
-        session["csrf_token"] = token
+    if getattr(g, "csrf_form_token", None):
+        return g.csrf_form_token
+    current = get_current_session()
+    if current is None:
+        create_session()
+        current = get_current_session()
+    token = secrets.token_urlsafe(32)
+    get_db().execute(
+        "UPDATE user_sessions SET csrf_token_hash = ? WHERE id = ?",
+        (_session_hash(token), current["id"]),
+    )
+    get_db().commit()
+    g.csrf_form_token = token
     return token
 
 
 def validate_csrf() -> bool:
     submitted = request.form.get("csrf_token", "")
-    stored = session.get("csrf_token", "")
-    return bool(submitted and stored and hmac.compare_digest(submitted, stored))
+    current = get_current_session()
+    stored = current["csrf_token_hash"] if current else None
+    return bool(submitted and stored and hmac.compare_digest(_session_hash(submitted), stored))
 
 
 def is_safe_url(target: str | None) -> bool:
@@ -305,8 +452,20 @@ def init_auth(app, database_path: Path) -> None:
 
     @app.before_request
     def _csrf_protection():
+        if session.get("session_id") and not validate_session():
+            if request.method == "POST":
+                abort(400, description="The session is no longer valid.")
         if request.method == "POST" and not validate_csrf():
             abort(400, description="Invalid or missing request security token.")
+
+    @app.after_request
+    def _security_headers(response):
+        if session.get("session_id"):
+            response.headers["Cache-Control"] = "no-store"
+            response.headers["Pragma"] = "no-cache"
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("Referrer-Policy", "same-origin")
+        return response
 
     @app.context_processor
     def _auth_template_context():
