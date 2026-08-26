@@ -201,7 +201,7 @@ def session_id(client):
 
 def test_login_rotates_identifier_and_cookie_contains_no_identity(client):
     add_user()
-    csrf = csrf_token(client)
+    csrf_token(client)
     before_login = session_id(client)
     assert login(client).status_code == 302
     after_login = session_id(client)
@@ -218,15 +218,30 @@ def test_idle_and_absolute_timeout_reject_session(client):
     with app_module.app.app_context():
         get_db().execute("UPDATE user_sessions SET last_activity_at = ? WHERE session_token_hash = ?", (old, hashlib.sha256(sid.encode()).hexdigest()))
         get_db().commit()
-    assert client.get("/").status_code == 302
-
+    expired_response = client.get("/")
+    assert expired_response.status_code == 302
+    login_response = client.get(expired_response.headers["Location"])
+    assert b"Your session has expired due to inactivity" in login_response.data
+    with app_module.app.app_context():
+        assert get_user(1)["is_active"] == 1
     assert login(client).status_code == 302
+
     sid = session_id(client)
     old = (datetime.now(timezone.utc) - timedelta(minutes=1)).isoformat(timespec="seconds")
     with app_module.app.app_context():
         get_db().execute("UPDATE user_sessions SET absolute_expires_at = ? WHERE session_token_hash = ?", (old, hashlib.sha256(sid.encode()).hexdigest()))
         get_db().commit()
     assert client.get("/").status_code == 302
+
+
+def test_logout_revokes_only_current_device_session(client):
+    add_user()
+    other_client = app_module.app.test_client()
+    assert login(client).status_code == 302
+    assert login(other_client).status_code == 302
+    assert client.get("/logout").status_code == 302
+    assert client.get("/").status_code == 302
+    assert other_client.get("/").status_code == 200
 
 
 def test_disabling_user_revokes_all_sessions(client):
@@ -241,7 +256,22 @@ def test_disabling_user_revokes_all_sessions(client):
     assert other_client.get("/").status_code == 302
 
 
-def test_fourth_login_revokes_oldest_session(client):
+def test_multiple_device_logins_remain_active_by_default(client):
+    add_user()
+    clients = [client] + [app_module.app.test_client() for _ in range(3)]
+    for current_client in clients:
+        assert login(current_client).status_code == 302
+    with app_module.app.app_context():
+        rows = get_db().execute(
+            "SELECT session_token_hash, revoked_at FROM user_sessions WHERE user_id = 1 ORDER BY created_at ASC, id ASC"
+        ).fetchall()
+    assert len(rows) == 4
+    assert all(row["revoked_at"] is None for row in rows)
+    assert all(current_client.get("/").status_code == 200 for current_client in clients)
+
+
+def test_optional_concurrent_session_limit_evicts_oldest(client, monkeypatch):
+    monkeypatch.setitem(app_module.app.config, "ENCCA_MAX_CONCURRENT_SESSIONS", 3)
     add_user()
     clients = [client] + [app_module.app.test_client() for _ in range(3)]
     for current_client in clients:
@@ -251,7 +281,6 @@ def test_fourth_login_revokes_oldest_session(client):
         rows = get_db().execute(
             "SELECT session_token_hash, revoked_at FROM user_sessions WHERE user_id = 1 ORDER BY created_at ASC, id ASC"
         ).fetchall()
-    assert len(rows) == 4
     assert rows[0]["session_token_hash"] == hashlib.sha256(identifiers[0].encode()).hexdigest()
     assert rows[0]["revoked_at"] is not None
     assert all(row["revoked_at"] is None for row in rows[1:])

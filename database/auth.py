@@ -300,14 +300,15 @@ def create_session(user_id: int | None = None, remember_me: bool = False):
     now_text = now.isoformat(timespec="seconds")
     db = get_db()
     if user_id is not None:
-        max_sessions = int(_session_config("ENCCA_MAX_CONCURRENT_SESSIONS", 3))
-        active = db.execute(
-            "SELECT id FROM user_sessions WHERE user_id = ? AND revoked_at IS NULL "
-            "AND expires_at >= ? AND absolute_expires_at >= ? ORDER BY created_at ASC, id ASC",
-            (user_id, now_text, now_text),
-        ).fetchall()
-        for old_session in active[:max(0, len(active) - max_sessions + 1)]:
-            db.execute("UPDATE user_sessions SET revoked_at = ? WHERE id = ?", (now_text, old_session["id"]))
+        max_sessions = int(_session_config("ENCCA_MAX_CONCURRENT_SESSIONS", 0))
+        if max_sessions > 0:
+            active = db.execute(
+                "SELECT id FROM user_sessions WHERE user_id = ? AND revoked_at IS NULL "
+                "AND expires_at >= ? AND absolute_expires_at >= ? ORDER BY created_at ASC, id ASC",
+                (user_id, now_text, now_text),
+            ).fetchall()
+            for old_session in active[:max(0, len(active) - max_sessions + 1)]:
+                db.execute("UPDATE user_sessions SET revoked_at = ? WHERE id = ?", (now_text, old_session["id"]))
     db.execute(
         "INSERT INTO user_sessions (session_token_hash, user_id, created_at, last_activity_at, expires_at, "
         "absolute_expires_at, ip_address, user_agent, remember_me) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -316,7 +317,10 @@ def create_session(user_id: int | None = None, remember_me: bool = False):
          request.user_agent.string[:512], int(remember_me)),
     )
     db.commit()
-    session.clear()
+    if user_id is None:
+        session.pop("session_id", None)
+    else:
+        session.clear()
     session["session_id"] = token
     return token
 
@@ -366,6 +370,8 @@ def validate_session() -> bool:
         user = get_user(current["user_id"])
         invalid = invalid or user is None or not user["is_active"]
     if invalid:
+        if current["user_id"] is not None and current["revoked_at"] is None:
+            g.session_expired = True
         revoke_session()
         session.clear()
         return False
@@ -397,7 +403,10 @@ def login_required(view):
             if request.accept_mimetypes.best == "application/json" or request.headers.get("X-Requested-With") == "XMLHttpRequest":
                 from flask import jsonify
                 return jsonify(error="authentication_required"), 401
-            flash("Please sign in to access ENCCA.")
+            if getattr(g, "session_expired", False):
+                flash("Your session has expired due to inactivity. Please sign in again.")
+            else:
+                flash("Please sign in to access ENCCA.")
             return redirect(url_for("login", next=request.full_path if request.query_string else request.path))
         g.current_user = user
         return view(*args, **kwargs)

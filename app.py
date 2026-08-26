@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, send_file, abort, g, session
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime
 import json
 import os
 import secrets
@@ -50,9 +50,9 @@ app.config["SESSION_COOKIE_SECURE"] = (
 )
 app.config["SESSION_COOKIE_PATH"] = "/"
 app.config["SESSION_COOKIE_NAME"] = "encca_session"
-app.config["ENCCA_SESSION_IDLE_TIMEOUT_MINUTES"] = int(os.environ.get("ENCCA_SESSION_IDLE_TIMEOUT_MINUTES", "30"))
+app.config["ENCCA_SESSION_IDLE_TIMEOUT_MINUTES"] = int(os.environ.get("ENCCA_SESSION_IDLE_TIMEOUT_MINUTES", "15"))
 app.config["ENCCA_SESSION_ABSOLUTE_TIMEOUT_HOURS"] = int(os.environ.get("ENCCA_SESSION_ABSOLUTE_TIMEOUT_HOURS", "8"))
-app.config["ENCCA_MAX_CONCURRENT_SESSIONS"] = int(os.environ.get("ENCCA_MAX_CONCURRENT_SESSIONS", "3"))
+app.config["ENCCA_MAX_CONCURRENT_SESSIONS"] = int(os.environ.get("ENCCA_MAX_CONCURRENT_SESSIONS", "0"))
 app.config["ENCCA_SESSION_TOUCH_MINUTES"] = 1
 for directory in (UPLOAD_DIR, AUDIT_RECORD_DIR, REPORT_DIR):
     directory.mkdir(parents=True, exist_ok=True)
