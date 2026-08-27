@@ -190,6 +190,25 @@ def test_authenticated_upload_still_runs(client):
     assert b"Audit Results" in response.data
 
 
+def test_authenticated_upload_persists_relational_audit_and_findings(client):
+    add_user()
+    assert login(client).status_code == 302
+    token = csrf_token(client, "/")
+    response = client.post(
+        "/", data={"csrf_token": token, "config_file": (BytesIO(b"hostname RELATIONAL-SW\n"), "relational.cfg")},
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 200
+    with app_module.app.app_context():
+        audit_count = get_db().execute("SELECT COUNT(*) FROM audits").fetchone()[0]
+        configuration_count = get_db().execute("SELECT COUNT(*) FROM configurations").fetchone()[0]
+        assert audit_count == configuration_count == 1
+        audit_id = get_db().execute("SELECT audit_id FROM audits").fetchone()[0]
+        assert get_db().execute("SELECT COUNT(*) FROM audit_findings WHERE audit_id = ?", (audit_id,)).fetchone()[0] >= 0
+        assert get_user(1)["username"] == "analyst"
+    assert client.get(f"/audit/{audit_id}").status_code == 200
+
+
 def test_admin_can_view_legacy_history_and_analyst_cannot_enumerate_it(client):
     add_user("admin", "admin@example.test", role="admin")
     record = {

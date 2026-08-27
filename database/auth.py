@@ -102,6 +102,7 @@ def get_db():
             path.parent.mkdir(parents=True, exist_ok=True)
             connection = sqlite3.connect(path)
             connection.row_factory = sqlite3.Row
+            connection.execute("PRAGMA foreign_keys = ON")
             g.auth_db = connection
     return g.auth_db
 
@@ -133,7 +134,7 @@ def initialize_database() -> None:
         CREATE TABLE IF NOT EXISTS user_sessions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             session_token_hash TEXT NOT NULL UNIQUE,
-            user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+            user_id INTEGER REFERENCES users(id) ON DELETE RESTRICT,
             created_at TEXT NOT NULL,
             last_activity_at TEXT NOT NULL,
             expires_at TEXT NOT NULL,
@@ -168,7 +169,7 @@ def initialize_database() -> None:
         CREATE TABLE IF NOT EXISTS user_sessions (
             id BIGSERIAL PRIMARY KEY,
             session_token_hash TEXT NOT NULL UNIQUE,
-            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+            user_id BIGINT REFERENCES users(id) ON DELETE RESTRICT,
             created_at TEXT NOT NULL,
             last_activity_at TEXT NOT NULL,
             expires_at TEXT NOT NULL,
@@ -183,6 +184,8 @@ def initialize_database() -> None:
         CREATE INDEX IF NOT EXISTS idx_sessions_expiration ON user_sessions(expires_at, absolute_expires_at);
         """
     db.executescript(postgres_schema if current_app.config.get("AUTH_DATABASE_URL") else sqlite_schema)
+    if current_app.config.get("AUTH_DATABASE_URL"):
+        db.execute("ALTER TABLE user_sessions ALTER COLUMN user_id TYPE BIGINT")
     db.commit()
 
 

@@ -196,6 +196,18 @@ Use `.env.example` only as a placeholder guide; do not commit a real `.env` file
 
 Audit timestamps are generated as timezone-aware UTC ISO-8601 values and stored unchanged. The UI and PDF convert them for presentation using the configurable `ENCCA_TIMEZONE`, which defaults to `Asia/Colombo`; legacy audit values in the former `%d %b %Y, %H:%M` format are treated as UTC because that was the previous writer's source clock. No server clock or fixed offset arithmetic is used.
 
+### Relational persistence
+
+The application uses SQLite locally and PostgreSQL in production through the shared database adapter. Startup schema creation is idempotent and records the `audit-relational-v1` migration in `schema_migrations`; it never drops tables or deletes data. The relational tables are `users`, `user_sessions`, `configurations`, `audits`, `audit_findings`, `security_events` and `reports`, with foreign keys and query indexes. Audit payloads remain in `audits.payload_json` for compatibility while their configuration metadata and findings are normalized for querying.
+
+To migrate an existing local SQLite account database and JSON audit records into the configured PostgreSQL database, set `ENCCA_DATABASE_URL` and run:
+
+```bash
+python -m database.migrate --source-db private/encca_auth.sqlite3 --audit-dir audit_records
+```
+
+The migration preserves password hashes, stable user IDs, audit IDs and findings, skips records already present, and reports migrated/skipped counts. Raw configuration files and generated PDFs remain filesystem artifacts until object storage is introduced; their relational storage references are recorded where available.
+
 Sessions use HTTP-only, `SameSite=Lax` cookies, `Path=/`, and secure cookies automatically on Vercel/HTTPS. The default idle timeout is 15 minutes, the absolute timeout is 8 hours, and concurrent sessions are unlimited by default. An optional positive `ENCCA_MAX_CONCURRENT_SESSIONS` value enables oldest-session eviction. These values are configurable with `ENCCA_SESSION_IDLE_TIMEOUT_MINUTES`, `ENCCA_SESSION_ABSOLUTE_TIMEOUT_HOURS`, and `ENCCA_MAX_CONCURRENT_SESSIONS`. Every state-changing form (login, upload and user management) carries a cryptographically random CSRF token whose hash is stored server-side. Login return URLs are restricted to local ENCCA paths. Logout revokes only the current session; user deactivation and password reset revoke all sessions for that account. Session expiry never changes the account or user data.
 
 ### Vercel

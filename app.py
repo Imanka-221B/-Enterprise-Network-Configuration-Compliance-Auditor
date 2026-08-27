@@ -2,6 +2,7 @@ from flask import Flask, Response, render_template, request, redirect, url_for, 
 from pathlib import Path
 from datetime import datetime, timezone
 import json
+import hashlib
 import os
 import secrets
 import tempfile
@@ -16,6 +17,10 @@ from database.auth import (
     admin_required, authenticate, create_user, csrf_token, get_current_user,
     init_auth, is_safe_url, list_users, login_required, reset_password,
     revoke_session, set_user_status, update_user, create_session,
+)
+from database.audits import (
+    get_audit, initialize_audit_schema, list_audits, record_report,
+    record_security_event, save_audit,
 )
 
 
@@ -71,6 +76,9 @@ database_configuration_error = bool(os.environ.get("VERCEL") and not database_ur
 app.config["AUTH_DATABASE_URL"] = database_url
 if not database_configuration_error:
     init_auth(app, RUNTIME_DIR / "private" / "encca_auth.sqlite3")
+    if not database_configuration_error:
+        with app.app_context():
+            initialize_audit_schema()
 else:
     @app.before_request
     def _database_configuration_required():
@@ -101,6 +109,9 @@ def audit_access_allowed(audit):
 def get_audit_record(audit_id):
     if not AUDIT_ID_PATTERN.fullmatch(audit_id):
         abort(404)
+    relational_audit = get_audit(audit_id)
+    if relational_audit and audit_access_allowed(relational_audit):
+        return relational_audit
     record_path = AUDIT_RECORD_DIR / f"{audit_id}.json"
     if not record_path.exists():
         abort(404)
@@ -116,7 +127,10 @@ def get_audit_record(audit_id):
 
 def load_audit_history():
     """Load persisted audits for the Audit History view, newest first."""
-    records = []
+    current_user = get_current_user()
+    records = list_audits(current_user["id"], current_user["role"] == "admin") if current_user else []
+    records = [_audit_history_entry(audit) for audit in records]
+    relational_ids = {record["audit_id"] for record in records}
     for path in AUDIT_RECORD_DIR.glob("*.json"):
         try:
             audit = json.loads(path.read_text(encoding="utf-8"))
@@ -124,26 +138,36 @@ def load_audit_history():
             continue
         if not audit_access_allowed(audit):
             continue
+        if (audit.get("audit_id") or path.stem) in relational_ids:
+            continue
 
-        summary = audit.get("summary", {})
-        risk_summary = audit.get("risk", {}).get("summary", {})
-        data = audit.get("data", {})
-        records.append({
-            "audit_id": audit.get("audit_id") or path.stem,
-            "filename": audit.get("filename", "-"),
-            "hostname": data.get("hostname") or "Unknown device",
-            "audit_time": audit.get("audit_time", ""),
-            "compliance_score": summary.get("compliance_score", 0),
-            "applicable": summary.get("evaluated", summary.get("total", 0)),
-            "passed": summary.get("passed", 0),
-            "failed": summary.get("failed", 0),
-            "not_applicable": summary.get("not_applicable", 0),
-            "risk_level": risk_summary.get("risk_level", "Low"),
-            "risk_percentage": risk_summary.get("risk_percentage", 0),
-            "finding_count": risk_summary.get("failed_count", summary.get("failed", 0)),
-            "performed_by": (audit.get("performed_by") or {}).get("username", "Legacy Audit"),
-        })
+        records.append(_audit_history_entry(audit, path.stem))
 
+    return _sort_audit_records(records)
+
+
+def _audit_history_entry(audit, fallback_id="-"):
+    summary = audit.get("summary", {})
+    risk_summary = audit.get("risk", {}).get("summary", {})
+    data = audit.get("data", {})
+    return {
+        "audit_id": audit.get("audit_id") or fallback_id,
+        "filename": audit.get("filename", "-"),
+        "hostname": data.get("hostname") or "Unknown device",
+        "audit_time": audit.get("audit_time", ""),
+        "compliance_score": summary.get("compliance_score", 0),
+        "applicable": summary.get("evaluated", summary.get("total", 0)),
+        "passed": summary.get("passed", 0),
+        "failed": summary.get("failed", 0),
+        "not_applicable": summary.get("not_applicable", 0),
+        "risk_level": risk_summary.get("risk_level", "Low"),
+        "risk_percentage": risk_summary.get("risk_percentage", 0),
+        "finding_count": risk_summary.get("failed_count", summary.get("failed", 0)),
+        "performed_by": (audit.get("performed_by") or {}).get("username", "Legacy Audit"),
+    }
+
+
+def _sort_audit_records(records):
     def history_sort_key(item):
         return parse_datetime(item.get("audit_time")) or datetime.min.replace(tzinfo=timezone.utc)
 
@@ -250,6 +274,8 @@ def upload():
             "category_risk": category_risk,
             "statistics": statistics,
             "audit_time": audit_time,
+            "file_hash": hashlib.sha256(destination.read_bytes()).hexdigest(),
+            "file_size": destination.stat().st_size,
             "user_id": g.current_user["id"],
             "username": g.current_user["username"],
             "performed_by": {
@@ -257,12 +283,17 @@ def upload():
                 "username": g.current_user["username"],
             },
         }
+        audit_path = AUDIT_RECORD_DIR / f"{audit_id}.json"
         try:
-            (AUDIT_RECORD_DIR / f"{audit_id}.json").write_text(
+            audit_path.write_text(
                 json.dumps(audit_record, default=str, indent=2), encoding="utf-8"
             )
-        except OSError:
-            app.logger.exception("Could not save audit record %s", audit_id)
+            save_audit(audit_record, g.current_user["id"], f"uploads/{audit_id}_{safe_name}")
+            record_security_event("AUDIT_COMPLETED", "success", g.current_user["id"], "audit", audit_id)
+        except Exception:
+            if audit_path.exists():
+                audit_path.unlink(missing_ok=True)
+            app.logger.exception("Could not persist audit record %s", audit_id)
             flash("The audit completed but its confidential result could not be saved. Please try again.")
             return redirect(url_for("upload"))
 
@@ -369,6 +400,13 @@ def download_audit_report(audit_id):
     if not pdf_path.exists() or pdf_path.stat().st_size == 0:
         return "ENCCA generated an empty PDF report. Please try the audit again.", 500
 
+    current_user = get_current_user()
+    try:
+        record_report(audit_id, current_user["id"], str(pdf_path))
+        record_security_event("REPORT_GENERATED", "success", current_user["id"], "audit", audit_id)
+    except Exception:
+        app.logger.exception("Could not persist report metadata for %s", audit_id)
+
     return send_file(
         pdf_path,
         as_attachment=True,
@@ -385,11 +423,13 @@ def login():
     if request.method == "POST":
         user = authenticate(request.form.get("identity", ""), request.form.get("password", ""))
         if user is None:
+            record_security_event("LOGIN_FAILURE", "failure")
             flash("Invalid username or password.")
             return render_template("login.html", provisioning_required=provisioning_required), 401
         # Revoke the anonymous session and issue a fresh authenticated token.
         revoke_session()
         create_session(user["id"])
+        record_security_event("LOGIN_SUCCESS", "success", user["id"], "user", str(user["id"]))
         destination = request.form.get("next") or request.args.get("next")
         return redirect(destination if is_safe_url(destination) else url_for("upload"))
     return render_template("login.html", provisioning_required=provisioning_required)
@@ -412,6 +452,7 @@ def register():
             )
             flash(message)
             if ok:
+                record_security_event("USER_CREATED", "success", resource_type="user")
                 return redirect(url_for("login"))
     return render_template("register.html")
 
@@ -419,6 +460,7 @@ def register():
 @app.route("/logout")
 @login_required
 def logout():
+    record_security_event("LOGOUT", "success", g.current_user["id"], "user", str(g.current_user["id"]))
     revoke_session()
     session.clear()
     flash("You have been signed out.")
@@ -444,6 +486,7 @@ def create_user_route():
             )
             flash(message)
             if ok:
+                record_security_event("USER_CREATED", "success", g.current_user["id"], "user")
                 return redirect(url_for("users"))
     return render_template("user_form.html", user=None, mode="create")
 
