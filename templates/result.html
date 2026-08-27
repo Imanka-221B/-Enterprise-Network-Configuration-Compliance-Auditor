@@ -60,6 +60,7 @@
     <main class="main-area">
         <header class="topbar">
             <div class="topbar-left">
+                <button class="mobile-nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false">☰</button>
                 <span class="mobile-brand">ENCCA</span>
                 <span class="breadcrumb">Audit Results <b>/</b> {{ data.hostname or filename }}</span>
             </div>
@@ -527,4 +528,5 @@ observedSections.forEach(section => sectionObserver.observe(section));
 })();
 </script>
 </body>
+<script src="{{ url_for('static', filename='js/responsive-nav.js') }}"></script>
 </html>

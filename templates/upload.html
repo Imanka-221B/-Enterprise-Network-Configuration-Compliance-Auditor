@@ -54,6 +54,7 @@
     <main class="main-area">
         <header class="topbar">
             <div class="topbar-left">
+                <button class="mobile-nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false">☰</button>
                 <span class="mobile-brand">ENCCA</span>
                 <span class="breadcrumb">Configuration <b>/</b> New Audit</span>
             </div>
@@ -246,4 +247,5 @@ zone.addEventListener('drop', e => {
 })();
 </script>
 </body>
+<script src="{{ url_for('static', filename='js/responsive-nav.js') }}"></script>
 </html>

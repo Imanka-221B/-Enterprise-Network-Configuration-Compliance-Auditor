@@ -40,7 +40,7 @@
 
     <main class="main-area">
         <header class="topbar">
-            <div class="topbar-left"><span class="mobile-brand">ENCCA</span><span class="breadcrumb">Reporting <b>/</b> Audit History</span></div>
+            <div class="topbar-left"><button class="mobile-nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false">☰</button><span class="mobile-brand">ENCCA</span><span class="breadcrumb">Reporting <b>/</b> Audit History</span></div>
             <div class="topbar-right"><span class="environment-chip"><span class="status-dot"></span> Local Audit</span><span class="engine-status"><span class="status-dot"></span> System Operational</span><span class="user-chip"><span class="avatar">{{ current_user.username[0]|upper }}</span>{{ current_user.username }} · {{ 'Administrator' if current_user.role == 'admin' else 'Security Analyst' }}</span><a class="logout-link" href="{{ url_for('logout') }}">Logout</a></div>
         </header>
 
@@ -115,4 +115,5 @@
 })();
 </script>
 </body>
+<script src="{{ url_for('static', filename='js/responsive-nav.js') }}"></script>
 </html>
