@@ -1,6 +1,6 @@
 from flask import Flask, Response, render_template, request, redirect, url_for, flash, send_file, abort, g, session
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import os
 import secrets
@@ -11,6 +11,7 @@ from werkzeug.utils import secure_filename
 from parser.cisco_parser import parse_cisco_config
 from audit.compliance_engine import audit_configuration, summarize_findings, load_rules
 from scoring.risk_engine import assess_findings
+from utils.timezone import format_datetime_local, now_utc, parse_datetime
 from database.auth import (
     admin_required, authenticate, create_user, csrf_token, get_current_user,
     init_auth, is_safe_url, list_users, login_required, reset_password,
@@ -33,6 +34,8 @@ REPORT_DIR = RUNTIME_DIR / "reports" / "generated"
 ALLOWED_EXTENSIONS = {".txt", ".cfg", ".conf"}
 
 app = Flask(__name__)
+app.config["ENCCA_TIMEZONE"] = os.environ.get("ENCCA_TIMEZONE", "Asia/Colombo")
+app.jinja_env.filters["local_datetime"] = format_datetime_local
 secret_key = os.environ.get("FLASK_SECRET_KEY")
 if not secret_key and os.environ.get("VERCEL"):
     app.logger.warning(
@@ -142,10 +145,7 @@ def load_audit_history():
         })
 
     def history_sort_key(item):
-        try:
-            return datetime.strptime(item.get("audit_time", ""), "%d %b %Y, %H:%M")
-        except (TypeError, ValueError):
-            return datetime.min
+        return parse_datetime(item.get("audit_time")) or datetime.min.replace(tzinfo=timezone.utc)
 
     records.sort(key=history_sort_key, reverse=True)
     return records
@@ -239,6 +239,7 @@ def upload():
             "interfaces": interface_inventory,
         }
 
+        audit_time = now_utc().isoformat(timespec="seconds")
         audit_record = {
             "audit_id": audit_id,
             "filename": safe_name,
@@ -248,7 +249,7 @@ def upload():
             "risk": risk,
             "category_risk": category_risk,
             "statistics": statistics,
-            "audit_time": datetime.now().strftime("%d %b %Y, %H:%M"),
+            "audit_time": audit_time,
             "user_id": g.current_user["id"],
             "username": g.current_user["username"],
             "performed_by": {
@@ -275,7 +276,7 @@ def upload():
             risk=risk,
             category_risk=category_risk,
             statistics=statistics,
-            audit_time=datetime.now().strftime("%d %b %Y, %H:%M")
+            audit_time=audit_time
         )
 
     return render_template("upload.html")

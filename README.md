@@ -192,6 +192,10 @@ Use `.env.example` only as a placeholder guide; do not commit a real `.env` file
 
 ### Session and request security
 
+### Timezone handling
+
+Audit timestamps are generated as timezone-aware UTC ISO-8601 values and stored unchanged. The UI and PDF convert them for presentation using the configurable `ENCCA_TIMEZONE`, which defaults to `Asia/Colombo`; legacy audit values in the former `%d %b %Y, %H:%M` format are treated as UTC because that was the previous writer's source clock. No server clock or fixed offset arithmetic is used.
+
 Sessions use HTTP-only, `SameSite=Lax` cookies, `Path=/`, and secure cookies automatically on Vercel/HTTPS. The default idle timeout is 15 minutes, the absolute timeout is 8 hours, and concurrent sessions are unlimited by default. An optional positive `ENCCA_MAX_CONCURRENT_SESSIONS` value enables oldest-session eviction. These values are configurable with `ENCCA_SESSION_IDLE_TIMEOUT_MINUTES`, `ENCCA_SESSION_ABSOLUTE_TIMEOUT_HOURS`, and `ENCCA_MAX_CONCURRENT_SESSIONS`. Every state-changing form (login, upload and user management) carries a cryptographically random CSRF token whose hash is stored server-side. Login return URLs are restricted to local ENCCA paths. Logout revokes only the current session; user deactivation and password reset revoke all sessions for that account. Session expiry never changes the account or user data.
 
 ### Vercel

@@ -90,7 +90,7 @@
                             <td><span class="history-score {% if record.compliance_score >= 80 %}good{% elif record.compliance_score >= 50 %}watch{% else %}poor{% endif %}">{{ record.compliance_score }}%</span><span class="history-sub">{{ record.passed }}/{{ record.applicable }} passed</span></td>
                             <td><span class="risk-badge risk-{{ record.risk_level|lower }}">{{ record.risk_level }}</span><span class="history-sub">{{ record.risk_percentage }}% risk</span></td>
                             <td><strong>{{ record.finding_count }}</strong><span class="history-sub">{{ record.failed }} failed</span></td>
-                            <td><span class="history-time">{{ record.audit_time }}</span></td>
+                            <td><span class="history-time">{{ record.audit_time|local_datetime }}</span></td>
                             <td><div class="history-actions"><a href="{{ url_for('audit_result', audit_id=record.audit_id) }}">View</a><a href="{{ url_for('audit_report', audit_id=record.audit_id) }}">Report</a><a href="{{ url_for('download_audit_report', audit_id=record.audit_id) }}">PDF</a></div></td>
                         </tr>
                         {% endfor %}

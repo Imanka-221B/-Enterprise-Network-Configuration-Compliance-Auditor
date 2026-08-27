@@ -6,6 +6,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, KeepTogether, LongTable
+from utils.timezone import format_datetime_local
 
 PAGE_BLUE = colors.HexColor("#0B3A60")
 ACCENT = colors.HexColor("#087EB7")
@@ -61,7 +62,7 @@ def build_pdf(audit, output_path):
     statistics = audit.get("statistics", {})
     findings = audit.get("findings", [])
     category_risk = audit.get("category_risk", {})
-    audit_time = audit.get("audit_time", "-")
+    audit_time = format_datetime_local(audit.get("audit_time"))
     hostname = data.get("hostname") or audit.get("filename") or "Unknown Device"
 
     styles = getSampleStyleSheet()

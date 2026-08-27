@@ -77,7 +77,7 @@
                 <div>
                     <div class="eyebrow">AUDIT RESULTS</div>
                     <h1>{{ data.hostname or "Configuration Audit" }}</h1>
-                    <p>Enterprise Network Configuration Compliance Auditor · completed {{ audit_time }}</p>
+                    <p>Enterprise Network Configuration Compliance Auditor · completed {{ audit_time|local_datetime }}</p>
                 </div>
                 <div class="heading-actions">
                     <a class="primary-button report-shortcut" href="{{ url_for('audit_report', audit_id=audit_id) }}">▤ Audit Report</a>
