@@ -61,6 +61,8 @@ database_url = (
     or os.environ.get("POSTGRES_URL_NON_POOLING")
     or os.environ.get("POSTGRES_URL")
     or os.environ.get("POSTGRES_PRISMA_URL")
+    or os.environ.get("NEON_DATABASE_URL")
+    or os.environ.get("NEON_DATABASE_URL_UNPOOLED")
 )
 database_configuration_error = bool(os.environ.get("VERCEL") and not database_url)
 app.config["AUTH_DATABASE_URL"] = database_url
@@ -70,7 +72,7 @@ else:
     @app.before_request
     def _database_configuration_required():
         return Response(
-            "ENCCA requires ENCCA_DATABASE_URL, DATABASE_URL, or a Vercel PostgreSQL URL to point to a durable PostgreSQL database.",
+            "ENCCA requires ENCCA_DATABASE_URL, DATABASE_URL, or a Neon/Vercel PostgreSQL URL to point to a durable PostgreSQL database.",
             status=503,
             mimetype="text/plain",
         )
