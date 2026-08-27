@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login-network.css') }}">
 </head>
 <body class="login-body">
 <main class="login-layout">
@@ -18,6 +19,19 @@
         <div class="login-security-notice">Authorized users only. Cisco network configuration data may contain confidential information.</div>
     </section>
     <section class="login-card-wrap">
+        <div class="network-visual-layer" aria-hidden="true">
+            <svg class="network-topology" viewBox="0 0 900 760" preserveAspectRatio="none">
+                <path d="M450 92v90M450 182H214M450 182h236M214 182v92M686 182v92M214 366v92M686 366v92M214 550h472M450 182v368" />
+                <circle cx="450" cy="182" r="5" /><circle cx="214" cy="366" r="5" /><circle cx="686" cy="366" r="5" /><circle cx="450" cy="550" r="5" />
+            </svg>
+            <div class="network-node dna-center"><img src="{{ url_for('static', filename='images/network/dna-center.svg') }}" alt=""><span>DNA Center</span></div>
+            <div class="network-node ise-node"><img src="{{ url_for('static', filename='images/network/ise.svg') }}" alt=""><span>ISE</span></div>
+            <div class="network-node switch-node"><img src="{{ url_for('static', filename='images/network/switch.svg') }}" alt=""><span>Switch</span></div>
+            <div class="network-node router-node"><img src="{{ url_for('static', filename='images/network/router.svg') }}" alt=""><span>Router</span></div>
+            <div class="network-node firewall-node"><img src="{{ url_for('static', filename='images/network/firewall.svg') }}" alt=""><span>Firewall</span></div>
+            <div class="network-node access-point-node"><img src="{{ url_for('static', filename='images/network/access-point.svg') }}" alt=""><span>Access Point</span></div>
+            <div class="network-node infrastructure-node"><img src="{{ url_for('static', filename='images/network/infrastructure.svg') }}" alt=""><span>Secure Infrastructure</span></div>
+        </div>
         <form class="login-card" method="post" novalidate>
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="next" value="{{ request.args.get('next', '') }}">

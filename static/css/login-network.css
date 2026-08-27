@@ -1,0 +1,16 @@
+:root{--network-ink:#24546e;--network-line:#8fb6c7;--network-blue:#087eb5;--network-pale:#edf6f9}
+.login-card-wrap{position:relative;isolation:isolate;overflow:hidden;background:#f8fbfc}
+.login-card-wrap::before{content:"";position:absolute;inset:0;z-index:-2;background:linear-gradient(135deg,rgba(255,255,255,.86),rgba(237,246,249,.72) 52%,rgba(255,255,255,.94)),radial-gradient(circle at 15% 20%,rgba(8,126,181,.08) 0 1px,transparent 2px);background-size:auto,22px 22px}
+.login-card-wrap::after{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse at center,rgba(255,255,255,.95) 0 25%,rgba(255,255,255,.35) 68%,transparent 100%);pointer-events:none}
+.network-visual-layer{position:absolute;inset:0;z-index:0;pointer-events:none;color:var(--network-ink);font-size:9px;font-weight:800;letter-spacing:.65px;text-transform:uppercase}
+.network-topology{position:absolute;inset:7% 5%;width:90%;height:86%;fill:none;stroke:var(--network-line);stroke-width:1.25;stroke-dasharray:4 7;opacity:.48}
+.network-topology circle{fill:#fff;stroke:var(--network-blue);stroke-width:1.5;opacity:.8}
+.network-node{position:absolute;display:flex;flex-direction:column;align-items:center;gap:7px;opacity:.78;filter:drop-shadow(0 5px 8px rgba(23,73,98,.08));animation:network-float 8s ease-in-out infinite}
+.network-node img{width:54px;height:54px;padding:10px;border:1px solid rgba(143,182,199,.65);border-radius:12px;background:rgba(255,255,255,.8)}
+.network-node span{white-space:nowrap;background:rgba(248,251,252,.8);padding:2px 5px}
+.dna-center{top:7%;left:50%;transform:translateX(-50%);animation-delay:-1s}.ise-node{top:29%;left:72%;animation-delay:-3s}.switch-node{top:29%;left:18%;animation-delay:-5s}.router-node{top:58%;left:10%;animation-delay:-2s}.firewall-node{top:58%;left:82%;animation-delay:-6s}.access-point-node{bottom:7%;left:50%;transform:translateX(-50%);animation-delay:-4s}.infrastructure-node{bottom:8%;left:17%;animation-delay:-7s}.infrastructure-node img{width:48px;height:48px}
+.login-card{position:relative;z-index:2}
+@keyframes network-float{0%,100%{margin-top:0}50%{margin-top:-5px}}
+@media(max-width:900px){.network-node{opacity:.55}.router-node,.firewall-node,.infrastructure-node{display:none}.network-topology{inset:9% 3%;width:94%;height:82%}.login-card-wrap{place-items:start center;padding:28px}.login-card{max-width:430px}}
+@media(max-width:680px){.network-visual-layer{opacity:.42}.ise-node,.switch-node,.access-point-node,.infrastructure-node{display:none}.network-topology{inset:8% 2%;height:84%;opacity:.6}.dna-center{top:4%;left:86%;transform:scale(.72)}.login-card-wrap{min-height:100vh;padding:22px 16px}.login-card{padding:28px 23px}.login-card-wrap::after{background:radial-gradient(ellipse at center,rgba(255,255,255,.98) 0 52%,rgba(255,255,255,.55) 100%)}}
+@media(prefers-reduced-motion:reduce){.network-node{animation:none}}
