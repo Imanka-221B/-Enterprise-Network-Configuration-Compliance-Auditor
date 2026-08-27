@@ -1,0 +1,94 @@
+!
+! ENCCA Compliance Engine Test Configuration
+! Intentionally insecure Cisco switch configuration
+!
+
+hostname BRANCH-SW-INSECURE
+
+!
+! SSH is not configured and AAA is disabled
+!
+no aaa new-model
+
+!
+! Insecure/default SNMP community
+!
+snmp-server community public RO
+
+!
+! No centralized logging and no NTP server
+!
+
+!
+! Plain HTTP management is enabled
+!
+ip http server
+
+!
+! VLANs
+!
+vlan 10
+ name INFRA
+vlan 20
+ name MANAGER
+vlan 30
+ name USER
+vlan 40
+ name VOICE
+vlan 99
+ name MANAGEMENT
+vlan 999
+ name UNUSED-NATIVE
+
+!
+! Access port without required security controls
+!
+interface GigabitEthernet1/0/1
+ description USER-PC-INSECURE
+ switchport mode access
+ switchport access vlan 30
+ no shutdown
+
+!
+! Another insecure access port
+!
+interface GigabitEthernet1/0/2
+ description IP-PHONE-AND-PC-INSECURE
+ switchport mode access
+ switchport access vlan 30
+ switchport voice vlan 40
+ no shutdown
+
+!
+! Trunk without explicit allowed VLAN list
+! and using default native VLAN 1
+!
+interface GigabitEthernet1/1/1
+ description UPLINK-TO-CORE-INSECURE
+ switchport mode trunk
+ switchport trunk native vlan 1
+ no shutdown
+
+!
+! Unused port is NOT shutdown
+!
+interface GigabitEthernet1/0/23
+ description UNUSED
+ switchport mode access
+ switchport access vlan 999
+ no shutdown
+
+!
+! VTY allows Telnet and has no management ACL
+!
+line vty 0 15
+ transport input telnet
+ exec-timeout 0 0
+
+!
+! No DHCP Snooping
+! No Dynamic ARP Inspection
+! No IP Source Guard
+!
+
+end

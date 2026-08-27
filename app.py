@@ -19,10 +19,9 @@ from database.auth import (
 
 
 BASE_DIR = Path(__file__).resolve().parent
-# Vercel Functions deploy application files on an immutable filesystem.  The
-# operating-system temporary directory is the only safe place for runtime
-# uploads, audit records and generated reports.  Local development retains the
-# original project folders so existing audit history is still available.
+# Vercel Functions deploy application files on an immutable filesystem. Runtime
+# audit artifacts remain temporary there; account data uses the durable database
+# configured below and never falls back to a temporary SQLite file.
 RUNTIME_DIR = (
     Path(tempfile.gettempdir()) / "encca"
     if os.environ.get("VERCEL")
@@ -56,6 +55,12 @@ app.config["ENCCA_MAX_CONCURRENT_SESSIONS"] = int(os.environ.get("ENCCA_MAX_CONC
 app.config["ENCCA_SESSION_TOUCH_MINUTES"] = 1
 for directory in (UPLOAD_DIR, AUDIT_RECORD_DIR, REPORT_DIR):
     directory.mkdir(parents=True, exist_ok=True)
+database_url = os.environ.get("ENCCA_DATABASE_URL") or os.environ.get("DATABASE_URL")
+if os.environ.get("VERCEL") and not database_url:
+    raise RuntimeError(
+        "ENCCA_DATABASE_URL or DATABASE_URL must point to a durable PostgreSQL database on Vercel."
+    )
+app.config["AUTH_DATABASE_URL"] = database_url
 init_auth(app, RUNTIME_DIR / "private" / "encca_auth.sqlite3")
 
 AUDIT_ID_PATTERN = re.compile(r"^[a-f0-9]{12}$")

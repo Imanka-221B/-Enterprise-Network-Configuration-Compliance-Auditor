@@ -196,9 +196,9 @@ Sessions use HTTP-only, `SameSite=Lax` cookies, `Path=/`, and secure cookies aut
 
 ### Vercel
 
-Set the secret and administrator environment variables above in **Vercel Project Settings → Environment Variables** for Production, Preview and Development as appropriate. Also configure the three session policy variables when changing their defaults. `FLASK_SECRET_KEY` should always be configured for production so the identifier cookie can be verified when Vercel starts another function instance. If it is omitted, ENCCA generates a temporary per-instance key and logs a warning; existing cookies will not survive instance changes.
+Set `FLASK_SECRET_KEY`, `ENCCA_DATABASE_URL` and the administrator environment variables in **Vercel Project Settings → Environment Variables** for Production, Preview and Development as appropriate. `ENCCA_DATABASE_URL` must be a durable PostgreSQL connection string from a managed provider. `DATABASE_URL` is accepted as a fallback for providers that use that conventional name. The deployment fails clearly when neither URL is configured rather than creating an ephemeral account database.
 
-Vercel Functions use temporary filesystem storage. Consequently, the SQLite authentication database, including `user_sessions`, is ephemeral and can disappear when a function instance is recycled; it is not a persistent enterprise session store for a multi-instance production deployment. The server-side design is fully functional for local development and a single durable runtime, but reliable production persistence requires a durable database integration, which this project intentionally does not add. The JSON audit records and generated PDFs have the same limitation. Bootstrap variables recreate only the initial administrator.
+Local development continues to use `private/encca_auth.sqlite3` when no database URL is configured. Vercel uses PostgreSQL for the `users` and `user_sessions` tables, so accounts remain available across function instances, restarts, browsers and devices. The JSON audit records and generated PDFs still use temporary Vercel filesystem storage and should be moved to object storage separately if those artifacts must persist in production.
 
 ### Tests
 

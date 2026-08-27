@@ -15,6 +15,13 @@ from urllib.parse import urljoin, urlparse
 from flask import abort, current_app, flash, g, redirect, request, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 
+try:
+    import psycopg
+    from psycopg.rows import tuple_row
+except ImportError:  # Local SQLite development does not require PostgreSQL.
+    psycopg = None
+    tuple_row = None
+
 LOCKOUT_ATTEMPTS = 5
 LOCKOUT_DURATION = timedelta(minutes=15)
 PASSWORD_PATTERN = re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{12,}$")
@@ -26,13 +33,76 @@ def utcnow() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
-def get_db() -> sqlite3.Connection:
+class _Row:
+    def __init__(self, values, columns):
+        self._values = tuple(values)
+        self._columns = columns
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return self._values[key]
+        return self._values[self._columns.index(key)]
+
+
+class _Cursor:
+    def __init__(self, cursor):
+        self._cursor = cursor
+
+    def execute(self, sql, parameters=()):
+        self._cursor.execute(sql.replace("?", "%s"), parameters)
+        return self
+
+    def fetchone(self):
+        row = self._cursor.fetchone()
+        return None if row is None else _Row(row, [column.name for column in self._cursor.description])
+
+    def fetchall(self):
+        columns = [column.name for column in self._cursor.description]
+        return [_Row(row, columns) for row in self._cursor.fetchall()]
+
+
+class _PostgresConnection:
+    def __init__(self, url):
+        self._connection = psycopg.connect(url, row_factory=tuple_row)
+
+    def execute(self, sql, parameters=()):
+        return _Cursor(self._connection.execute(sql.replace("?", "%s"), parameters))
+
+    def executescript(self, sql):
+        for statement in sql.split(";"):
+            if statement.strip():
+                self.execute(statement)
+
+    def commit(self):
+        self._connection.commit()
+
+    def rollback(self):
+        self._connection.rollback()
+
+    def close(self):
+        self._connection.close()
+
+
+def _integrity_errors():
+    errors = [sqlite3.IntegrityError]
+    if psycopg is not None:
+        errors.append(psycopg.IntegrityError)
+    return tuple(errors)
+
+
+def get_db():
     if "auth_db" not in g:
-        path = Path(current_app.config["AUTH_DATABASE"])
-        path.parent.mkdir(parents=True, exist_ok=True)
-        connection = sqlite3.connect(path)
-        connection.row_factory = sqlite3.Row
-        g.auth_db = connection
+        database_url = current_app.config.get("AUTH_DATABASE_URL")
+        if database_url:
+            if psycopg is None:
+                raise RuntimeError("PostgreSQL support requires the psycopg package.")
+            g.auth_db = _PostgresConnection(database_url)
+        else:
+            path = Path(current_app.config["AUTH_DATABASE"])
+            path.parent.mkdir(parents=True, exist_ok=True)
+            connection = sqlite3.connect(path)
+            connection.row_factory = sqlite3.Row
+            g.auth_db = connection
     return g.auth_db
 
 
@@ -44,8 +114,7 @@ def close_db(_error=None):
 
 def initialize_database() -> None:
     db = get_db()
-    db.executescript(
-        """
+    sqlite_schema = """
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT NOT NULL COLLATE NOCASE UNIQUE,
@@ -77,8 +146,43 @@ def initialize_database() -> None:
         );
         CREATE INDEX IF NOT EXISTS idx_sessions_user_active ON user_sessions(user_id, revoked_at);
         CREATE INDEX IF NOT EXISTS idx_sessions_expiration ON user_sessions(expires_at, absolute_expires_at);
+    """
+    postgres_schema = """
+        CREATE TABLE IF NOT EXISTS users (
+            id BIGSERIAL PRIMARY KEY,
+            username TEXT NOT NULL,
+            email TEXT NOT NULL,
+            password_hash TEXT NOT NULL,
+            role TEXT NOT NULL CHECK (role IN ('admin', 'analyst')),
+            is_active INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
+            failed_login_attempts INTEGER NOT NULL DEFAULT 0 CHECK (failed_login_attempts >= 0),
+            locked_until TEXT,
+            last_login_at TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username_nocase ON users (LOWER(username));
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_nocase ON users (LOWER(email));
+        CREATE INDEX IF NOT EXISTS idx_users_role_active ON users(role, is_active);
+        CREATE INDEX IF NOT EXISTS idx_users_locked_until ON users(locked_until);
+        CREATE TABLE IF NOT EXISTS user_sessions (
+            id BIGSERIAL PRIMARY KEY,
+            session_token_hash TEXT NOT NULL UNIQUE,
+            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+            created_at TEXT NOT NULL,
+            last_activity_at TEXT NOT NULL,
+            expires_at TEXT NOT NULL,
+            absolute_expires_at TEXT NOT NULL,
+            revoked_at TEXT,
+            ip_address TEXT,
+            user_agent TEXT,
+            remember_me INTEGER NOT NULL DEFAULT 0 CHECK (remember_me IN (0, 1)),
+            csrf_token_hash TEXT
+        );
+        CREATE INDEX IF NOT EXISTS idx_sessions_user_active ON user_sessions(user_id, revoked_at);
+        CREATE INDEX IF NOT EXISTS idx_sessions_expiration ON user_sessions(expires_at, absolute_expires_at);
         """
-    )
+    db.executescript(postgres_schema if current_app.config.get("AUTH_DATABASE_URL") else sqlite_schema)
     db.commit()
 
 
@@ -117,7 +221,7 @@ def get_user(user_id: int):
 def list_users():
     return get_db().execute(
         "SELECT id, username, email, role, is_active, failed_login_attempts, locked_until, "
-        "last_login_at, created_at, updated_at FROM users ORDER BY username COLLATE NOCASE"
+        "last_login_at, created_at, updated_at FROM users ORDER BY LOWER(username)"
     ).fetchall()
 
 
@@ -136,7 +240,8 @@ def create_user(username: str, email: str, password: str, role: str = "analyst")
             (username, email, generate_password_hash(password), role, now, now),
         )
         get_db().commit()
-    except sqlite3.IntegrityError:
+    except _integrity_errors():
+        get_db().rollback()
         return False, "Username or email is already in use."
     return True, "User created."
 
@@ -175,7 +280,8 @@ def update_user(user_id: int, email: str, role: str, is_active: bool, actor_id: 
         if not is_active:
             revoke_all_user_sessions(user_id)
         get_db().commit()
-    except sqlite3.IntegrityError:
+    except _integrity_errors():
+        get_db().rollback()
         return False, "Username or email is already in use."
     return True, "User updated."
 
@@ -233,7 +339,7 @@ def authenticate(identity: str, password: str):
     identity = (identity or "").strip()
     user = get_db().execute(
         "SELECT id, username, email, password_hash, role, is_active, failed_login_attempts, locked_until "
-        "FROM users WHERE username = ? COLLATE NOCASE OR email = ? COLLATE NOCASE LIMIT 1",
+        "FROM users WHERE LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?) LIMIT 1",
         (identity, identity),
     ).fetchone()
     if user is None:

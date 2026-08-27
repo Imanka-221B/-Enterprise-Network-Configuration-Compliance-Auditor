@@ -71,6 +71,22 @@ def test_user_can_register_then_login_as_analyst(client):
     assert login(client, identity="new-analyst", password="NewAnalystPassword!1").status_code == 302
 
 
+def test_registered_account_survives_new_database_connection(client):
+    token = csrf_token(client, "/register")
+    response = client.post(
+        "/register", data={
+            "csrf_token": token, "username": "persistent-user", "email": "persistent@example.test",
+            "password": "PersistentPassword!1", "confirm_password": "PersistentPassword!1",
+        },
+    )
+    assert response.status_code == 302
+    with app_module.app.app_context():
+        assert get_user(1)["username"] == "persistent-user"
+    with app_module.app.app_context():
+        assert get_user(1)["email"] == "persistent@example.test"
+    assert login(client, identity="persistent-user", password="PersistentPassword!1").status_code == 302
+
+
 def test_registration_requires_csrf_and_does_not_accept_admin_role(client):
     assert client.post("/register", data={"username": "bad", "role": "admin"}).status_code == 400
 
