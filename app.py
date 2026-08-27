@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, send_file, abort, g, session
+from flask import Flask, Response, render_template, request, redirect, url_for, flash, send_file, abort, g, session
 from pathlib import Path
 from datetime import datetime
 import json
@@ -55,13 +55,25 @@ app.config["ENCCA_MAX_CONCURRENT_SESSIONS"] = int(os.environ.get("ENCCA_MAX_CONC
 app.config["ENCCA_SESSION_TOUCH_MINUTES"] = 1
 for directory in (UPLOAD_DIR, AUDIT_RECORD_DIR, REPORT_DIR):
     directory.mkdir(parents=True, exist_ok=True)
-database_url = os.environ.get("ENCCA_DATABASE_URL") or os.environ.get("DATABASE_URL")
-if os.environ.get("VERCEL") and not database_url:
-    raise RuntimeError(
-        "ENCCA_DATABASE_URL or DATABASE_URL must point to a durable PostgreSQL database on Vercel."
-    )
+database_url = (
+    os.environ.get("ENCCA_DATABASE_URL")
+    or os.environ.get("DATABASE_URL")
+    or os.environ.get("POSTGRES_URL_NON_POOLING")
+    or os.environ.get("POSTGRES_URL")
+    or os.environ.get("POSTGRES_PRISMA_URL")
+)
+database_configuration_error = bool(os.environ.get("VERCEL") and not database_url)
 app.config["AUTH_DATABASE_URL"] = database_url
-init_auth(app, RUNTIME_DIR / "private" / "encca_auth.sqlite3")
+if not database_configuration_error:
+    init_auth(app, RUNTIME_DIR / "private" / "encca_auth.sqlite3")
+else:
+    @app.before_request
+    def _database_configuration_required():
+        return Response(
+            "ENCCA requires ENCCA_DATABASE_URL, DATABASE_URL, or a Vercel PostgreSQL URL to point to a durable PostgreSQL database.",
+            status=503,
+            mimetype="text/plain",
+        )
 
 AUDIT_ID_PATTERN = re.compile(r"^[a-f0-9]{12}$")
 

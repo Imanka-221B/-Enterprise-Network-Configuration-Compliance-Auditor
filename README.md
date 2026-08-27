@@ -196,7 +196,7 @@ Sessions use HTTP-only, `SameSite=Lax` cookies, `Path=/`, and secure cookies aut
 
 ### Vercel
 
-Set `FLASK_SECRET_KEY`, `ENCCA_DATABASE_URL` and the administrator environment variables in **Vercel Project Settings → Environment Variables** for Production, Preview and Development as appropriate. `ENCCA_DATABASE_URL` must be a durable PostgreSQL connection string from a managed provider. `DATABASE_URL` is accepted as a fallback for providers that use that conventional name. The deployment fails clearly when neither URL is configured rather than creating an ephemeral account database.
+Set `FLASK_SECRET_KEY`, `ENCCA_DATABASE_URL` and the administrator environment variables in **Vercel Project Settings → Environment Variables** for Production, Preview and Development as appropriate. `ENCCA_DATABASE_URL` must be a durable PostgreSQL connection string from a managed provider. `DATABASE_URL` and Vercel’s `POSTGRES_URL_NON_POOLING`, `POSTGRES_URL` or `POSTGRES_PRISMA_URL` are accepted as fallbacks. The deployment returns a clear configuration response when no URL is configured rather than creating an ephemeral account database.
 
 Local development continues to use `private/encca_auth.sqlite3` when no database URL is configured. Vercel uses PostgreSQL for the `users` and `user_sessions` tables, so accounts remain available across function instances, restarts, browsers and devices. The JSON audit records and generated PDFs still use temporary Vercel filesystem storage and should be moved to object storage separately if those artifacts must persist in production.
 

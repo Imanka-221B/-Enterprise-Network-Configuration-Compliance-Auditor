@@ -133,7 +133,7 @@ def initialize_database() -> None:
         CREATE TABLE IF NOT EXISTS user_sessions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             session_token_hash TEXT NOT NULL UNIQUE,
-            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+            user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
             created_at TEXT NOT NULL,
             last_activity_at TEXT NOT NULL,
             expires_at TEXT NOT NULL,
